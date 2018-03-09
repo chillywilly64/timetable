@@ -1,23 +1,22 @@
 package parser;
 
-import ga_old.ClassRoom;
-import ga_old.Professor;
-import ga_old.Subject;
+import ga.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
+import service.TimetableService;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.time.DayOfWeek;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,70 +33,112 @@ public class DataParser {
     @Value("${requestUrl}")
     private String requestUrl;
 
+    @Value("${groupsList}")
+    private String groupsList;
+
+    private int roomId = 0;
+    private int moduleId = 0;
+    private int professorId = 0;
+    private int timeslotId = 0;
+
+    @Autowired
+    private TimetableService timetableService;
+
     @RequestMapping("/timetable")
-    public void getItemInfo() throws IOException {
-        Document doc = Jsoup.connect(requestUrl).get();
-        log.info("Getting info from " + doc.title());
-        Element schedule = doc.select("table[id=schedule]").first();
-        Elements rows = schedule.select("tr");
+    public ModelAndView getTimetable(ModelAndView modelAndView) {
+        modelAndView.setViewName("timetable");
+        modelAndView.addObject(timetableService.timetableToDTO(TimetableGA.run(null)));
+        return modelAndView;
+    }
 
-        Set<ClassRoom> classRooms = new HashSet<>();
-        Map<String,Subject> subjects = new HashMap<>();
-        Map<String,Professor> professors = new HashMap<>();
+    @RequestMapping("/parser")
+    public ModelAndView getItemInfo(ModelAndView modelAndView) throws IOException {
+        Timetable timetable = new Timetable();
 
-        for (Element row: rows) {
-            for (Element cell: row.select("td")) {
-                for (Element element: cell.select("div.l")) {
-                    if (element != null) {
-                        addClassroom(classRooms, element);
-                        Subject subject = getAndAddSubjects(subjects, element);
-                        addProfessors(professors, element, subject);
+        Set<String> rooms = new HashSet<>();
+        Map<String, Module> modules = new HashMap<>();
+        Map<String, Professor> professors = new HashMap<>();
+        Set<String> timeslots = new HashSet<>();
 
+        for (String group: groupsList.split(",")) {
+            Document doc = Jsoup.connect(requestUrl + group).get();
+
+            Element schedule = doc.select("table[id=schedule]").first();
+            Elements rows = schedule.select("tr");
+
+            List<Module> groupModules = new ArrayList<>();
+
+            for (Element row : rows) {
+                addTimeslot(timeslots, row);
+                for (Element cell : row.select("td")) {
+                    for (Element element : cell.select("div.l")) {
+                        if (element != null) {
+                            addClassroom(rooms, element);
+                            addModuleAndProfessor(modules, professors, groupModules, element);
+                        }
                     }
                 }
             }
+
+            timetable.addGroup(Integer.parseInt(group), 30, groupModules);
         }
-        classRooms.forEach(room -> System.out.println(room.getDepartment() + " " + room.getRoomNo()));
-        subjects.forEach((s, subject) -> System.out.println(subject.getSubjectName() + " " + subject.getNumberOfLecturesPerWeek()));
+
+        rooms.stream().map(roomName -> new Room(roomId++, roomName, 40)).forEach(room -> timetable.addRoom(room));
+        modules.values().stream().forEach(module -> timetable.addModule(module));
+        professors.values().stream().forEach(professor -> timetable.addProfessor(professor));
+        for (String timeslot: timeslots) {
+            for (DayOfWeek dayOfWeek: DayOfWeek.values()) {
+                if (!dayOfWeek.equals(DayOfWeek.SUNDAY)) {
+                    timetable.addTimeslot(new Timeslot(timeslotId++, dayOfWeek, timeslot));
+                }
+            }
+        }
+
+        modelAndView.setViewName("timetable");
+        modelAndView.addObject(timetableService.timetableToDTO(TimetableGA.run(timetable)));
+        return modelAndView;
+
     }
 
-    private void addClassroom(Set<ClassRoom> classRooms, Element element) {
-        boolean isLab = isPractit(element);
-
-        String roomAndDep = element.selectFirst("div.l-p").text();
-        String dep = extractSubstringByRegex(roomAndDep, DEP_PATTERN);
-        String room = extractSubstringByRegex(roomAndDep, ROOM_PATTERN_1, ROOM_PATTERN_2);
-
-        classRooms.add(new ClassRoom(room, 40, isLab, dep));
+    private void addTimeslot(Set<String> timeslots, Element element) {
+        String timeslot = element.selectFirst("th").text();
+        if (timeslot != null && !timeslot.isEmpty()) {
+            timeslots.add(timeslot);
+        }
     }
 
-    private Subject getAndAddSubjects(Map<String,Subject> subjects, Element element) {
-        boolean isLab = isPractit(element);
+    private void addClassroom(Set<String> classRooms, Element element) {
 
-        String roomAndDep = element.selectFirst("div.l-p").text();
-        String dep = extractSubstringByRegex(roomAndDep, DEP_PATTERN);
+        String room = element.selectFirst("div.l-p").text();
 
+        classRooms.add(room);
+    }
+
+    private void addModuleAndProfessor(Map<String,Module> modules, Map<String, Professor> professors, List<Module> groupModules, Element element) {
         String name = element.selectFirst("div.l-dn").text();
-
-        Subject subject = subjects.get(name);
-        if (subject != null) {
-            subject.incremateNumberOfLecturesPerWeek();
+        Professor professor = addProfessors(professors, element);
+        Module module = modules.get(name);
+        if (module != null) {
+            module.incremateNumberOfLecturesPerWeek();
+            module.addProfessor(professor);
         } else {
-            subject = new Subject(name, 1, isLab, dep);
-            subjects.put(name, subject);
+            List<Professor> professorList = new ArrayList<>();
+            professorList.add(professor);
+            module = new Module(moduleId++, name, 1, professorList);
+            modules.put(name, module);
+            groupModules.add(module);
         }
-        return subject;
     }
 
-    private void addProfessors(Map<String,Professor> professors, Element element, Subject subject) {
+    private Professor addProfessors(Map<String,Professor> professors, Element element) {
         String name = element.selectFirst("div.l-tn").text();
-
         Professor professor = professors.get(name);
-        if (professor != null) {
-            professor.addSubject(subject.getSubjectName());
-        } else {
-            professors.put(name, new Professor(name, subject.getSubjectName()));
+        if (professor == null) {
+            professor = new Professor(professorId++, name);
+            professors.put(name, professor);
         }
+
+        return professor;
     }
 
     private boolean isPractit(Element element) {

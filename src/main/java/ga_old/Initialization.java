@@ -20,20 +20,20 @@ public class Initialization {
 
 	//reads input from a file.
 	
-	public void readInput() throws IOException {
-		List<ClassRoom> classroom;
-		List<Professor> professors;
-		TimeTable timetb1 = null;
+	public void readInput(List<Professor> professors, List<ClassRoom> classRooms, List<Course> courses) throws IOException {
+		this.professors = professors;
+		createLectures(professors);
 
-		System.out.println("Setting tt.......");
-		
-		System.out.println("adding tt.......");
+		TimeTable timetb1 = new TimeTable(classRooms, classes);
+
+		for (Course course: courses) {
+			course.createCombination(20);
+			course.createStudentGroups();
+			timetb1.addStudentGroups(course.getStudentGroups());
+		}
+		timetb1.initializeTimeTable();
 
 		timetables.add(timetb1);
-
-		System.out.println("populating.......");
-		
-		//display();
 		
 		populateTimeTable(timetb1);
 		GeneticAlgorithm ge=new GeneticAlgorithm();

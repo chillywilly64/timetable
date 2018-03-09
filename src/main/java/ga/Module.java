@@ -1,27 +1,41 @@
 package ga;
 
+import java.util.List;
+import java.util.Objects;
+
 /**
  * Simple course module abstraction, which defines the Professors teaching the module.
  */
 public class Module {
-    private final int moduleId;
-    private final String moduleCode;
+    private int moduleId;
     private final String module;
-    private final int professorIds[];
+    private final List<Professor> professors;
+    private int numberOfClassesPerWeek;
     
     /**
      * Initialize new Module
      * 
      * @param moduleId
-     * @param moduleCode
      * @param module
-     * @param professorIds
+     * @param professors
      */
-    public Module(int moduleId, String moduleCode, String module, int professorIds[]){
+    public Module(int moduleId, String module, int numberOfClassesPerWeek, List<Professor> professors){
         this.moduleId = moduleId;
-        this.moduleCode = moduleCode;
         this.module = module;
-        this.professorIds = professorIds;
+        this.professors = professors;
+        this.numberOfClassesPerWeek = numberOfClassesPerWeek;
+    }
+
+    /**
+     * Initialize new Module
+     *
+     * @param module
+     * @param professors
+     */
+    public Module(String module, int numberOfClassesPerWeek, List<Professor> professors){
+        this.module = module;
+        this.professors = professors;
+        this.numberOfClassesPerWeek = numberOfClassesPerWeek;
     }
     
     /**
@@ -31,15 +45,6 @@ public class Module {
      */
     public int getModuleId(){
         return this.moduleId;
-    }
-    
-    /**
-     * Get module code
-     * 
-     * @return moduleCode
-     */
-    public String getModuleCode(){
-        return this.moduleCode;
     }
     
     /**
@@ -56,8 +61,36 @@ public class Module {
      * 
      * @return professorId
      */
-    public int getRandomProfessorId(){
-        int professorId = professorIds[(int) (professorIds.length * Math.random())];
-        return professorId;
+    public Professor getRandomProfessor(){
+        return professors.get((int) (professors.size() * Math.random()));
+    }
+
+    public int getNumberOfClassesPerWeek() {
+        return numberOfClassesPerWeek;
+    }
+
+    public void incremateNumberOfLecturesPerWeek() {
+        numberOfClassesPerWeek++;
+    }
+
+    public void addProfessor(Professor professor) {
+        if (!professors.contains(professor)) professors.add(professor);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Module)) return false;
+        Module module1 = (Module) o;
+        return moduleId == module1.moduleId &&
+                numberOfClassesPerWeek == module1.numberOfClassesPerWeek &&
+                Objects.equals(module, module1.module) &&
+                Objects.equals(professors, module1.professors);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(moduleId, module, professors, numberOfClassesPerWeek);
     }
 }

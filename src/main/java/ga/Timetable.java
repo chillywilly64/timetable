@@ -1,6 +1,7 @@
 package ga;
 
-import java.util.HashMap;
+import java.time.DayOfWeek;
+import java.util.*;
 
 /**
  * Timetable is the main evaluation class for the class scheduler GA.
@@ -25,11 +26,11 @@ import java.util.HashMap;
  * 
  */
 public class Timetable {
-	private final HashMap<Integer, Room> rooms;
-	private final HashMap<Integer, Professor> professors;
-	private final HashMap<Integer, Module> modules;
-	private final HashMap<Integer, Group> groups;
-	private final HashMap<Integer, Timeslot> timeslots;
+	private final Map<Integer, Room> rooms;
+	private final Map<Integer, Professor> professors;
+	private final Map<Integer, Module> modules;
+	private final Map<Integer, Group> groups;
+	private final Map<Integer, Timeslot> timeslots;
 	private Class classes[];
 
 	private int numClasses = 0;
@@ -65,19 +66,19 @@ public class Timetable {
 		this.timeslots = cloneable.getTimeslots();
 	}
 
-	private HashMap<Integer, Group> getGroups() {
+	private Map<Integer, Group> getGroups() {
 		return this.groups;
 	}
 
-	private HashMap<Integer, Timeslot> getTimeslots() {
+	public Map<Integer, Timeslot> getTimeslots() {
 		return this.timeslots;
 	}
 
-	private HashMap<Integer, Module> getModules() {
+	private Map<Integer, Module> getModules() {
 		return this.modules;
 	}
 
-	private HashMap<Integer, Professor> getProfessors() {
+	private Map<Integer, Professor> getProfessors() {
 		return this.professors;
 	}
 
@@ -93,6 +94,15 @@ public class Timetable {
 	}
 
 	/**
+	 * Add new room
+	 *
+	 * @param room
+	 */
+	public void addRoom(Room room) {
+		this.rooms.put(room.getRoomId(), room);
+	}
+
+	/**
 	 * Add new professor
 	 * 
 	 * @param professorId
@@ -103,15 +113,33 @@ public class Timetable {
 	}
 
 	/**
+	 * Add new professor
+	 *
+	 * @param professor
+	 */
+	public void addProfessor(Professor professor) {
+		this.professors.put(professor.getProfessorId(), professor);
+	}
+
+	/**
 	 * Add new module
 	 * 
 	 * @param moduleId
 	 * @param moduleCode
 	 * @param module
-	 * @param professorIds
+	 * @param professors
 	 */
-	public void addModule(int moduleId, String moduleCode, String module, int professorIds[]) {
-		this.modules.put(moduleId, new Module(moduleId, moduleCode, module, professorIds));
+	public void addModule(int moduleId, String moduleCode, String module, int numberOfClassesPerWeek, List<Professor> professors) {
+		this.modules.put(moduleId, new Module(moduleId, module, numberOfClassesPerWeek, professors));
+	}
+
+	/**
+	 * Add new module
+	 *
+	 * @param module
+	 */
+	public void addModule(Module module) {
+		this.modules.put(module.getModuleId(), module);
 	}
 
 	/**
@@ -119,10 +147,20 @@ public class Timetable {
 	 * 
 	 * @param groupId
 	 * @param groupSize
-	 * @param moduleIds
+	 * @param modules
 	 */
-	public void addGroup(int groupId, int groupSize, int moduleIds[]) {
-		this.groups.put(groupId, new Group(groupId, groupSize, moduleIds));
+	public void addGroup(int groupId, int groupSize, List<Module> modules) {
+		this.groups.put(groupId, new Group(groupId, groupSize, modules));
+		this.numClasses = 0;
+	}
+
+	/**
+	 * Add new group
+	 *
+	 * @param group
+	 */
+	public void addGroup(Group group) {
+		this.groups.put(group.getGroupId(), group);
 		this.numClasses = 0;
 	}
 
@@ -132,8 +170,17 @@ public class Timetable {
 	 * @param timeslotId
 	 * @param timeslot
 	 */
-	public void addTimeslot(int timeslotId, String timeslot) {
-		this.timeslots.put(timeslotId, new Timeslot(timeslotId, timeslot));
+	public void addTimeslot(int timeslotId, DayOfWeek dayOfWeek, String timeslot) {
+		this.timeslots.put(timeslotId, new Timeslot(timeslotId, dayOfWeek, timeslot));
+	}
+
+	/**
+	 * Add new timeslot
+	 *
+	 * @param timeslot
+	 */
+	public void addTimeslot(Timeslot timeslot) {
+		this.timeslots.put(timeslot.getTimeslotId(), timeslot);
 	}
 
 	/**
@@ -160,23 +207,24 @@ public class Timetable {
 		int classIndex = 0;
 
 		for (Group group : this.getGroupsAsArray()) {
-			int moduleIds[] = group.getModuleIds();
-			for (int moduleId : moduleIds) {
-				classes[classIndex] = new Class(classIndex, group.getGroupId(), moduleId);
+			for (Module module : group.getModules()) {
+				for (int number = 1; number <= module.getNumberOfClassesPerWeek(); number++) {
+					classes[classIndex] = new Class(classIndex, group, module);
 
-				// Add timeslot
-				classes[classIndex].addTimeslot(chromosome[chromosomePos]);
-				chromosomePos++;
+					// Add timeslot
+					classes[classIndex].addTimeslot(getTimeslot(chromosome[chromosomePos]));
+					chromosomePos++;
 
-				// Add room
-				classes[classIndex].setRoomId(chromosome[chromosomePos]);
-				chromosomePos++;
+					// Add room
+					classes[classIndex].setRoom(getRoom(chromosome[chromosomePos]));
+					chromosomePos++;
 
-				// Add professor
-				classes[classIndex].addProfessor(chromosome[chromosomePos]);
-				chromosomePos++;
+					// Add professor
+					classes[classIndex].addProfessor(getProfessor(chromosome[chromosomePos]));
+					chromosomePos++;
 
-				classIndex++;
+					classIndex++;
+				}
 			}
 		}
 
@@ -196,7 +244,7 @@ public class Timetable {
 		return (Room) this.rooms.get(roomId);
 	}
 
-	public HashMap<Integer, Room> getRooms() {
+	public Map<Integer, Room> getRooms() {
 		return this.rooms;
 	}
 
@@ -237,9 +285,9 @@ public class Timetable {
 	 * @param groupId
 	 * @return moduleId array
 	 */
-	public int[] getGroupModules(int groupId) {
-		Group group = (Group) this.groups.get(groupId);
-		return group.getModuleIds();
+	public List<Module> getGroupModules(int groupId) {
+		Group group = this.groups.get(groupId);
+		return group.getModules();
 	}
 
 	/**
@@ -268,7 +316,7 @@ public class Timetable {
 	 * @return timeslot
 	 */
 	public Timeslot getTimeslot(int timeslotId) {
-		return (Timeslot) this.timeslots.get(timeslotId);
+		return this.timeslots.get(timeslotId);
 	}
 
 	/**
@@ -292,6 +340,23 @@ public class Timetable {
 	}
 
 	/**
+	 * Get classes by group
+	 *
+	 * @return classes
+	 */
+	public NavigableMap<Integer,List<Class>> getClassesByGroups() {
+		NavigableMap<Integer,List<Class>> classesByGroups = new TreeMap<>();
+		for (Class clas: classes) {
+			List<Class> classesByGroup = classesByGroups.get(clas.getGroup().getGroupId());
+			if (classesByGroup == null) {
+				classesByGroups.put(clas.getGroup().getGroupId(), classesByGroup = new ArrayList<>());
+			}
+			classesByGroup.add(clas);
+		}
+		return classesByGroups;
+	}
+
+	/**
 	 * Get number of classes that need scheduling
 	 * 
 	 * @return numClasses
@@ -304,7 +369,9 @@ public class Timetable {
 		int numClasses = 0;
 		Group groups[] = (Group[]) this.groups.values().toArray(new Group[this.groups.size()]);
 		for (Group group : groups) {
-			numClasses += group.getModuleIds().length;
+			for (Module module: group.getModules()) {
+				numClasses += module.getNumberOfClassesPerWeek();
+			}
 		}
 		this.numClasses = numClasses;
 
@@ -338,8 +405,8 @@ public class Timetable {
 
 		for (Class classA : this.classes) {
 			// Check room capacity
-			int roomCapacity = this.getRoom(classA.getRoomId()).getRoomCapacity();
-			int groupSize = this.getGroup(classA.getGroupId()).getGroupSize();
+			int roomCapacity = classA.getRoom().getRoomCapacity();
+			int groupSize = classA.getGroup().getGroupSize();
 			
 			if (roomCapacity < groupSize) {
 				clashes++;
@@ -347,7 +414,7 @@ public class Timetable {
 
 			// Check if room is taken
 			for (Class classB : this.classes) {
-				if (classA.getRoomId() == classB.getRoomId() && classA.getTimeslotId() == classB.getTimeslotId()
+				if (classA.getRoom().getRoomId() == classB.getRoom().getRoomId() && classA.getTimeslot().getTimeslotId() == classB.getTimeslot().getTimeslotId()
 						&& classA.getClassId() != classB.getClassId()) {
 					clashes++;
 					break;
@@ -356,7 +423,7 @@ public class Timetable {
 
 			// Check if professor is available
 			for (Class classB : this.classes) {
-				if (classA.getProfessorId() == classB.getProfessorId() && classA.getTimeslotId() == classB.getTimeslotId()
+				if (classA.getProfessor().getProfessorId() == classB.getProfessor().getProfessorId() && classA.getTimeslot().getTimeslotId() == classB.getTimeslot().getTimeslotId()
 						&& classA.getClassId() != classB.getClassId()) {
 					clashes++;
 					break;

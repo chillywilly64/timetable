@@ -1,6 +1,8 @@
 package ga;
 
 
+import java.time.DayOfWeek;
+import java.util.Arrays;
 
 /**
  * Don't be daunted by the number of classes in this chapter -- most of them are
@@ -31,9 +33,9 @@ package ga;
  */
 public class TimetableGA {
 
-    public static void main(String[] args) {
+    public static Timetable run(Timetable timetable) {
     	// Get a Timetable object with all the available information.
-        Timetable timetable = initializeTimetable();
+        if (timetable == null) timetable = initializeTimetable();
         
         // Initialize GA
         GeneticAlgorithm ga = new GeneticAlgorithm(100, 0.01, 0.9, 2, 5);
@@ -80,18 +82,20 @@ public class TimetableGA {
         for (Class bestClass : classes) {
             System.out.println("Class " + classIndex + ":");
             System.out.println("Module: " + 
-                    timetable.getModule(bestClass.getModuleId()).getModuleName());
+                    bestClass.getModule().getModuleName());
             System.out.println("Group: " + 
-                    timetable.getGroup(bestClass.getGroupId()).getGroupId());
+                    bestClass.getGroup().getGroupId());
             System.out.println("Room: " + 
-                    timetable.getRoom(bestClass.getRoomId()).getRoomNumber());
+                    bestClass.getRoom().getRoomNumber());
             System.out.println("Professor: " + 
-                    timetable.getProfessor(bestClass.getProfessorId()).getProfessorName());
-            System.out.println("Time: " + 
-                    timetable.getTimeslot(bestClass.getTimeslotId()).getTimeslot());
+                    bestClass.getProfessor().getProfessorName());
+            System.out.println("Time: " +
+					bestClass.getTimeslot().getDayOfWeek() + " " +
+                    bestClass.getTimeslot().getTimeslot());
             System.out.println("-----");
             classIndex++;
         }
+        return timetable;
     }
 
     /**
@@ -106,53 +110,63 @@ public class TimetableGA {
 		Timetable timetable = new Timetable();
 
 		// Set up rooms
-		timetable.addRoom(1, "A1", 15);
-		timetable.addRoom(2, "B1", 30);
-		timetable.addRoom(4, "D1", 20);
-		timetable.addRoom(5, "F1", 25);
+		timetable.addRoom(1,"A1", 15);
+		timetable.addRoom(2,"B1", 30);
+		timetable.addRoom(3,"D1", 20);
+		timetable.addRoom(4,"F1", 25);
 
 		// Set up timeslots
-		timetable.addTimeslot(1, "Mon 9:00 - 11:00");
-		timetable.addTimeslot(2, "Mon 11:00 - 13:00");
-		timetable.addTimeslot(3, "Mon 13:00 - 15:00");
-		timetable.addTimeslot(4, "Tue 9:00 - 11:00");
-		timetable.addTimeslot(5, "Tue 11:00 - 13:00");
-		timetable.addTimeslot(6, "Tue 13:00 - 15:00");
-		timetable.addTimeslot(7, "Wed 9:00 - 11:00");
-		timetable.addTimeslot(8, "Wed 11:00 - 13:00");
-		timetable.addTimeslot(9, "Wed 13:00 - 15:00");
-		timetable.addTimeslot(10, "Thu 9:00 - 11:00");
-		timetable.addTimeslot(11, "Thu 11:00 - 13:00");
-		timetable.addTimeslot(12, "Thu 13:00 - 15:00");
-		timetable.addTimeslot(13, "Fri 9:00 - 11:00");
-		timetable.addTimeslot(14, "Fri 11:00 - 13:00");
-		timetable.addTimeslot(15, "Fri 13:00 - 15:00");
+		timetable.addTimeslot(1, DayOfWeek.MONDAY,"09:00 - 11:00");
+		timetable.addTimeslot(2,DayOfWeek.MONDAY,"11:00 - 13:00");
+		timetable.addTimeslot(3,DayOfWeek.MONDAY,"13:00 - 15:00");
+		timetable.addTimeslot(4,DayOfWeek.TUESDAY, "09:00 - 11:00");
+		timetable.addTimeslot(5,DayOfWeek.TUESDAY, "11:00 - 13:00");
+		timetable.addTimeslot(6,DayOfWeek.TUESDAY, "13:00 - 15:00");
+		timetable.addTimeslot(7,DayOfWeek.WEDNESDAY, "09:00 - 11:00");
+		timetable.addTimeslot(8,DayOfWeek.WEDNESDAY, "11:00 - 13:00");
+		timetable.addTimeslot(9,DayOfWeek.WEDNESDAY, "13:00 - 15:00");
+		timetable.addTimeslot(10,DayOfWeek.THURSDAY, "09:00 - 11:00");
+		timetable.addTimeslot(11,DayOfWeek.THURSDAY, "11:00 - 13:00");
+		timetable.addTimeslot(12,DayOfWeek.THURSDAY, "13:00 - 15:00");
+		timetable.addTimeslot(13,DayOfWeek.FRIDAY, "09:00 - 11:00");
+		timetable.addTimeslot(14,DayOfWeek.FRIDAY, "11:00 - 13:00");
+		timetable.addTimeslot(15,DayOfWeek.FRIDAY, "13:00 - 15:00");
 
 		// Set up professors
-		timetable.addProfessor(1, "Dr P Smith");
-		timetable.addProfessor(2, "Mrs E Mitchell");
-		timetable.addProfessor(3, "Dr R Williams");
-		timetable.addProfessor(4, "Mr A Thompson");
+		Professor professor1 = new Professor(1,"Dr P Smith");
+		Professor professor2 = new Professor(2,"Mrs E Mitchell");
+		Professor professor3 = new Professor(3,"Dr R Williams");
+		Professor professor4 = new Professor(4,"Mr A Thompson");
+		timetable.addProfessor(professor1);
+		timetable.addProfessor(professor2);
+		timetable.addProfessor(professor3);
+		timetable.addProfessor(professor4);
 
 		// Set up modules and define the professors that teach them
-		timetable.addModule(1, "cs1", "Computer Science", new int[] { 1, 2 });
-		timetable.addModule(2, "en1", "English", new int[] { 1, 3 });
-		timetable.addModule(3, "ma1", "Maths", new int[] { 1, 2 });
-		timetable.addModule(4, "ph1", "Physics", new int[] { 3, 4 });
-		timetable.addModule(5, "hi1", "History", new int[] { 4 });
-		timetable.addModule(6, "dr1", "Drama", new int[] { 1, 4 });
+		Module module1 = new Module(1,"Computer Science", 2, Arrays.asList(professor1, professor2));
+		Module module2 = new Module(2,"English", 1, Arrays.asList(professor1, professor3));
+		Module module3 = new Module(3,"Maths", 3, Arrays.asList(professor1, professor2));
+		Module module4 = new Module(4,"Physics", 2, Arrays.asList(professor3, professor4));
+		Module module5 = new Module(5,"History", 1, Arrays.asList(professor4));
+		Module module6 = new Module(6,"Drama", 1, Arrays.asList(professor1, professor4));
+		timetable.addModule(module1);
+		timetable.addModule(module2);
+		timetable.addModule(module3);
+		timetable.addModule(module4);
+		timetable.addModule(module5);
+		timetable.addModule(module6);
 
 		// Set up student groups and the modules they take.
-		timetable.addGroup(1, 10, new int[] { 1, 3, 4 });
-		timetable.addGroup(2, 30, new int[] { 2, 3, 5, 6 });
-		timetable.addGroup(3, 18, new int[] { 3, 4, 5 });
-		timetable.addGroup(4, 25, new int[] { 1, 4 });
-		timetable.addGroup(5, 20, new int[] { 2, 3, 5 });
-		timetable.addGroup(6, 22, new int[] { 1, 4, 5 });
-		timetable.addGroup(7, 16, new int[] { 1, 3 });
-		timetable.addGroup(8, 18, new int[] { 2, 6 });
-		timetable.addGroup(9, 24, new int[] { 1, 6 });
-		timetable.addGroup(10, 25, new int[] { 3, 4 });
+		timetable.addGroup(1, 10, Arrays.asList(module1, module3, module4));
+		timetable.addGroup(2, 30, Arrays.asList(module2, module3, module5, module6));
+		timetable.addGroup(3, 18, Arrays.asList(module3, module4, module5));
+		timetable.addGroup(4, 25, Arrays.asList(module1, module4));
+		timetable.addGroup(5, 20, Arrays.asList(module2, module3, module5));
+		timetable.addGroup(6, 22, Arrays.asList(module1, module4, module5));
+		timetable.addGroup(7, 16, Arrays.asList(module1, module3));
+		timetable.addGroup(8, 18, Arrays.asList(module2, module6));
+		timetable.addGroup(9, 24, Arrays.asList(module1, module6));
+		timetable.addGroup(10, 25, Arrays.asList(module3, module4));
 		return timetable;
 	}
 }

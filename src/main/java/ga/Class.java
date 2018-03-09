@@ -1,54 +1,67 @@
 package ga;
 
+import java.util.Objects;
+
 /**
  * A simple class abstraction -- basically a container for class, group, module, professor, timeslot, and room IDs
  */
 public class Class {
-    private final int classId;
-    private final int groupId;
-    private final int moduleId;
-    private int professorId;
-    private int timeslotId;
-    private int roomId;
+    private int classId;
+    private final Group group;
+    private final Module module;
+    private Professor professor;
+    private Timeslot timeslot;
+    private Room room;
     
     /**
      * Initialize new Class
      * 
      * @param classId
-     * @param groupId
-     * @param moduleId
+     * @param group
+     * @param module
      */
-    public Class(int classId, int groupId, int moduleId){
+    public Class(int classId, Group group, Module module){
         this.classId = classId;
-        this.moduleId = moduleId;
-        this.groupId = groupId;
+        this.module = module;
+        this.group = group;
+    }
+
+    /**
+     * Initialize new Class
+     *
+     * @param group
+     * @param module
+     */
+    public Class(Group group, Module module){
+        this.module = module;
+        this.group = group;
     }
     
     /**
      * Add professor to class
      * 
-     * @param professorId
+     * @param professor
      */
-    public void addProfessor(int professorId){
-        this.professorId = professorId;
+    public void addProfessor(Professor professor){
+        this.professor = professor;
     }
     
     /**
      * Add timeslot to class
      * 
-     * @param timeslotId
+     * @param timeslot
      */
-    public void addTimeslot(int timeslotId){
-        this.timeslotId = timeslotId;
+    public void addTimeslot(Timeslot timeslot){
+        this.timeslot = timeslot;
     }    
     
     /**
      * Add room to class
      * 
-     * @param roomId
+     * @param room
      */
-    public void setRoomId(int roomId){
-        this.roomId = roomId;
+    public void setRoom(Room room){
+        this.room = room;
     }
     
     /**
@@ -63,19 +76,19 @@ public class Class {
     /**
      * Get groupId
      * 
-     * @return groupId
+     * @return group
      */
-    public int getGroupId(){
-        return this.groupId;
+    public Group getGroup(){
+        return this.group;
     }
     
     /**
-     * Get moduleId
+     * Get module
      * 
-     * @return moduleId
+     * @return module
      */
-    public int getModuleId(){
-        return this.moduleId;
+    public Module getModule(){
+        return this.module;
     }
     
     /**
@@ -83,8 +96,8 @@ public class Class {
      * 
      * @return professorId
      */
-    public int getProfessorId(){
-        return this.professorId;
+    public Professor getProfessor(){
+        return this.professor;
     }
     
     /**
@@ -92,8 +105,8 @@ public class Class {
      * 
      * @return timeslotId
      */
-    public int getTimeslotId(){
-        return this.timeslotId;
+    public Timeslot getTimeslot(){
+        return this.timeslot;
     }
     
     /**
@@ -101,8 +114,27 @@ public class Class {
      * 
      * @return roomId
      */
-    public int getRoomId(){
-        return this.roomId;
+    public Room getRoom(){
+        return this.room;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Class)) return false;
+        Class aClass = (Class) o;
+        return classId == aClass.classId &&
+                Objects.equals(group, aClass.group) &&
+                Objects.equals(module, aClass.module) &&
+                Objects.equals(professor, aClass.professor) &&
+                Objects.equals(timeslot, aClass.timeslot) &&
+                Objects.equals(room, aClass.room);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(classId, group, module, professor, timeslot, room);
     }
 }
 

@@ -38,21 +38,22 @@ public class Individual {
 		// Loop through groups
 		for (Group group : timetable.getGroupsAsArray()) {
 			// Loop through modules
-			for (int moduleId : group.getModuleIds()) {
-				// Add random time
-				int timeslotId = timetable.getRandomTimeslot().getTimeslotId();
-				newChromosome[chromosomeIndex] = timeslotId;
-				chromosomeIndex++;
+			for (Module module: group.getModules()) {
+				for (int number = 1; number <= module.getNumberOfClassesPerWeek(); number++) {
+					// Add random time
+					int timeslotId = timetable.getRandomTimeslot().getTimeslotId();
+					newChromosome[chromosomeIndex] = timeslotId;
+					chromosomeIndex++;
 
-				// Add random room
-				int roomId = timetable.getRandomRoom().getRoomId();
-				newChromosome[chromosomeIndex] = roomId;
-				chromosomeIndex++;
+					// Add random room
+					int roomId = timetable.getRandomRoom().getRoomId();
+					newChromosome[chromosomeIndex] = roomId;
+					chromosomeIndex++;
 
-				// Add random professor
-				Module module = timetable.getModule(moduleId);
-				newChromosome[chromosomeIndex] = module.getRandomProfessorId();
-				chromosomeIndex++;
+					// Add random professor
+					newChromosome[chromosomeIndex] = module.getRandomProfessor().getProfessorId();
+					chromosomeIndex++;
+				}
 			}
 		}
 

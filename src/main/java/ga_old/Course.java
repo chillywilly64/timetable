@@ -27,7 +27,7 @@ public class Course {
 		this.studentGroups = studentGroups;
 	}
 
-	Course(String name, List<Subject> subjects){
+	public Course(String name, List<Subject> subjects){
 		System.out.println("creating new course.......");
 		this.courseName=name;
 		this.subjectsIncluded=subjects;
