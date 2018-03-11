@@ -52,17 +52,19 @@ public class TimetableService {
                 .collect(Collectors.toList());
     }
 
-    private List<CellDTO[][]> getCells(Timetable timetable) {
+    private Map<Integer, CellDTO[][]> getCells(Timetable timetable) {
         List<String> timeslots = getTimeslots(timetable);
         List<DayOfWeek> days = Arrays.asList(DayOfWeek.values());
 
-        List<CellDTO[][]> tables = new ArrayList<>();
+        Map<Integer, CellDTO[][]> tables = new HashMap<>();
 
-        for (List<Class> classes: timetable.getClassesByGroups().values()) {
+        Map<Integer, List<Class>> classesByGroups = timetable.getClassesByGroups();
+
+        for (Integer group: classesByGroups.keySet()) {
 
             CellDTO[][] table = new CellDTO[timeslots.size()][days.size()];
 
-            for (Class clas : classes) {
+            for (Class clas : classesByGroups.get(group)) {
                 int timeslotNumber = timeslots.indexOf(clas.getTimeslot().getTimeslot());
                 int dayNumber = days.indexOf(clas.getTimeslot().getDayOfWeek());
 
@@ -73,7 +75,7 @@ public class TimetableService {
                                 clas.getRoom().getRoomNumber());
             }
 
-            tables.add(table);
+            tables.put(group, table);
         }
         return tables;
     }

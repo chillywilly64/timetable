@@ -56,9 +56,9 @@ public class DataParser {
         Timetable timetable = new Timetable();
 
         Set<String> rooms = new HashSet<>();
-        Map<String, Module> modules = new HashMap<>();
-        Map<String, Professor> professors = new HashMap<>();
+        Map<String, Professor> professorsMap = new HashMap<>();
         Set<String> timeslots = new HashSet<>();
+        List<Module> modules = new ArrayList<>();
 
         for (String group: groupsList.split(",")) {
             Document doc = Jsoup.connect(requestUrl + group).get();
@@ -66,7 +66,7 @@ public class DataParser {
             Element schedule = doc.select("table[id=schedule]").first();
             Elements rows = schedule.select("tr");
 
-            List<Module> groupModules = new ArrayList<>();
+            Map<String, Module> modulesMap = new HashMap<>();
 
             for (Element row : rows) {
                 addTimeslot(timeslots, row);
@@ -74,18 +74,20 @@ public class DataParser {
                     for (Element element : cell.select("div.l")) {
                         if (element != null) {
                             addClassroom(rooms, element);
-                            addModuleAndProfessor(modules, professors, groupModules, element);
+                            addModuleAndProfessor(modulesMap, professorsMap, element);
                         }
                     }
                 }
             }
 
+            List<Module> groupModules = new ArrayList<>(modulesMap.values());
+            modules.addAll(groupModules);
             timetable.addGroup(Integer.parseInt(group), 30, groupModules);
         }
 
         rooms.stream().map(roomName -> new Room(roomId++, roomName, 40)).forEach(room -> timetable.addRoom(room));
-        modules.values().stream().forEach(module -> timetable.addModule(module));
-        professors.values().stream().forEach(professor -> timetable.addProfessor(professor));
+        modules.stream().forEach(module -> timetable.addModule(module));
+        professorsMap.values().stream().forEach(professor -> timetable.addProfessor(professor));
         for (String timeslot: timeslots) {
             for (DayOfWeek dayOfWeek: DayOfWeek.values()) {
                 if (!dayOfWeek.equals(DayOfWeek.SUNDAY)) {
@@ -114,7 +116,7 @@ public class DataParser {
         classRooms.add(room);
     }
 
-    private void addModuleAndProfessor(Map<String,Module> modules, Map<String, Professor> professors, List<Module> groupModules, Element element) {
+    private void addModuleAndProfessor(Map<String,Module> modules, Map<String, Professor> professors, Element element) {
         String name = element.selectFirst("div.l-dn").text();
         Professor professor = addProfessors(professors, element);
         Module module = modules.get(name);
@@ -126,7 +128,6 @@ public class DataParser {
             professorList.add(professor);
             module = new Module(moduleId++, name, 1, professorList);
             modules.put(name, module);
-            groupModules.add(module);
         }
     }
 

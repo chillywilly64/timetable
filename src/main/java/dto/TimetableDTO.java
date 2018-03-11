@@ -1,13 +1,14 @@
 package dto;
 
 import java.util.List;
+import java.util.Map;
 
 public class TimetableDTO {
 
     private List<String> daysOfWeek;
     private List<String> timeslots;
 
-    private List<CellDTO[][]> tables;
+    private Map<Integer, CellDTO[][]> tables;
 
     public List<String> getDaysOfWeek() {
         return daysOfWeek;
@@ -25,11 +26,11 @@ public class TimetableDTO {
         this.timeslots = timeslots;
     }
 
-    public List<CellDTO[][]> getTables() {
+    public  Map<Integer, CellDTO[][]> getTables() {
         return tables;
     }
 
-    public void setTables(List<CellDTO[][]> table) {
+    public void setTables(Map<Integer, CellDTO[][]> table) {
         this.tables = table;
     }
 }
