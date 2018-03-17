@@ -1,5 +1,9 @@
 package ga;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.IntStream;
 
 public class GeneticAlgorithm {
 
@@ -8,6 +12,17 @@ public class GeneticAlgorithm {
 	private double crossoverRate;
 	private int elitismCount;
 	protected int tournamentSize;
+
+	// Create fitness hashtable
+	private Map<Individual, Double> fitnessHash = Collections.
+			synchronizedMap(
+					new LinkedHashMap<Individual, Double>() {
+						@Override
+						protected boolean removeEldestEntry(Map.Entry<Individual, Double> entry) {
+							// Store a maximum of 1000 fitness values
+							return this.size() > 1000;
+						}
+					});
 
 	public GeneticAlgorithm(int populationSize, double mutationRate, double crossoverRate, int elitismCount,
 			int tournamentSize) {
@@ -64,6 +79,11 @@ public class GeneticAlgorithm {
 	 */
 	public double calcFitness(Individual individual, Timetable timetable) {
 
+		Double storedFitness = this.fitnessHash.get(individual);
+		if (storedFitness != null) {
+			return storedFitness;
+		}
+
 		// Create new timetable object to use -- cloned from an existing timetable
 		Timetable threadTimetable = new Timetable(timetable);
 		threadTimetable.createClasses(individual);
@@ -73,6 +93,9 @@ public class GeneticAlgorithm {
 		double fitness = 1 / (double) (clashes + 1);
 
 		individual.setFitness(fitness);
+
+		// Store fitness in hashtable
+		this.fitnessHash.put(individual, fitness);
 
 		return fitness;
 	}
@@ -84,6 +107,10 @@ public class GeneticAlgorithm {
 	 * @param timetable
 	 */
 	public void evalPopulation(Population population, Timetable timetable) {
+		IntStream.range(0, population.size()).parallel()
+				.forEach(i -> this.calcFitness(population.getIndividual(i),
+						timetable));
+
 		double populationFitness = 0;
 
 		// Loop over population evaluating individuals and summing population
@@ -131,6 +158,9 @@ public class GeneticAlgorithm {
 		// Initialize new population
 		Population newPopulation = new Population(this.populationSize);
 
+		//get best fitness
+		double bestFitness = population.getFittest(0).getFitness();
+
 		// Loop over current population by fitness
 		for (int populationIndex = 0; populationIndex < population.size(); populationIndex++) {
 			Individual individual = population.getFittest(populationIndex);
@@ -138,12 +168,23 @@ public class GeneticAlgorithm {
 			// Create random individual to swap genes with
 			Individual randomIndividual = new Individual(timetable);
 
+			// Calculate adaptive mutation rate
+			double adaptiveMutationRate = this.mutationRate;
+			if (individual.getFitness() > population.getAvgFitness()) {
+				double fitnessDelta1 = bestFitness - individual.
+						getFitness();
+				double fitnessDelta2 = bestFitness - population.
+						getAvgFitness();
+				adaptiveMutationRate = (fitnessDelta1 / fitnessDelta2) *
+						this.mutationRate;
+			}
+
 			// Loop over individual's genes
 			for (int geneIndex = 0; geneIndex < individual.getChromosomeLength(); geneIndex++) {
 				// Skip mutation if this is an elite individual
 				if (populationIndex > this.elitismCount) {
 					// Does this gene need mutation?
-					if (this.mutationRate > Math.random()) {
+					if (adaptiveMutationRate > Math.random()) {
 						// Swap for new gene
 						individual.setGene(geneIndex, randomIndividual.getGene(geneIndex));
 					}
@@ -200,7 +241,5 @@ public class GeneticAlgorithm {
 
 		return newPopulation;
 	}
-
-
 
 }

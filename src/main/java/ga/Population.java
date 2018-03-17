@@ -1,4 +1,5 @@
 package ga;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
@@ -143,8 +144,7 @@ public class Population {
 
 	/**
 	 * Shuffles the population in-place
-	 * 
-	 * @param void
+	 *
 	 * @return void
 	 */
 	public void shuffle() {
@@ -155,6 +155,22 @@ public class Population {
 			population[index] = population[i];
 			population[i] = a;
 		}
+	}
+
+	/**
+	 * Get average fitness
+	 *
+	 * @return The average individual fitness
+	 */
+	public double getAvgFitness(){
+		if (this.populationFitness == -1) {
+			double totalFitness = 0;
+			for (Individual individual : population) {
+				totalFitness += individual.getFitness();
+			}
+			this.populationFitness = totalFitness;
+		}
+		return populationFitness / this.size();
 	}
 
 }

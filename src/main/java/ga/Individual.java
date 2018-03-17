@@ -1,5 +1,7 @@
 package ga;
 
+import java.util.Arrays;
+
 public class Individual {
 	
 	/**
@@ -203,6 +205,35 @@ public class Individual {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Generates hash code based on individual's
+	 * chromosome
+	 *
+	 * @return Hash value
+	 */
+	@Override
+	public int hashCode() {
+		int hash = Arrays.hashCode(this.chromosome);
+		return hash;
+	}
+	/**
+	 * Equates based on individual's chromosome
+	 *
+	 * @return Equality boolean
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		Individual individual = (Individual) obj;
+		return Arrays.equals(this.chromosome, individual.chromosome);
 	}
 
 
