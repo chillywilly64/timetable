@@ -31,19 +31,20 @@ public class Timetable {
 	private final Map<Integer, Module> modules;
 	private final Map<Integer, Group> groups;
 	private final Map<Integer, Timeslot> timeslots;
-	private Class classes[];
+	private Class[][][] classes;
 
 	private int numClasses = 0;
+	private List<String> dayTimeslot;
 
 	/**
 	 * Initialize new Timetable
 	 */
 	public Timetable() {
-		this.rooms = new HashMap<Integer, Room>();
-		this.professors = new HashMap<Integer, Professor>();
-		this.modules = new HashMap<Integer, Module>();
-		this.groups = new HashMap<Integer, Group>();
-		this.timeslots = new HashMap<Integer, Timeslot>();
+		this.rooms = new HashMap<>();
+		this.professors = new HashMap<>();
+		this.modules = new HashMap<>();
+		this.groups = new HashMap<>();
+		this.timeslots = new HashMap<>();
 	}
 
 	/**
@@ -64,6 +65,7 @@ public class Timetable {
 		this.modules = cloneable.getModules();
 		this.groups = cloneable.getGroups();
 		this.timeslots = cloneable.getTimeslots();
+		this.dayTimeslot = cloneable.getDayTimeslot();
 	}
 
 	private Map<Integer, Group> getGroups() {
@@ -81,6 +83,11 @@ public class Timetable {
 	private Map<Integer, Professor> getProfessors() {
 		return this.professors;
 	}
+
+	private List<String> getDayTimeslot() {
+		return this.dayTimeslot;
+	}
+
 
 	/**
 	 * Add new room
@@ -184,6 +191,15 @@ public class Timetable {
 	}
 
 	/**
+	 * Set day's timeslot
+	 *
+	 * @param dayTimeslot
+	 */
+	public void setDaysTimeslot(List<String> dayTimeslot){
+		this.dayTimeslot = dayTimeslot;
+	}
+
+	/**
 	 * Create classes using individual's chromosome
 	 * 
 	 * One of the two important methods in this class; given a chromosome,
@@ -199,36 +215,44 @@ public class Timetable {
 	 */
 	public void createClasses(Individual individual) {
 		// Init classes
-		Class classes[] = new Class[this.getNumClasses()];
+		Class[][][] allClasses = new Class[groups.size()][DayOfWeek.values().length - 1][dayTimeslot.size()];
 
 		// Get individual's chromosome
 		int chromosome[] = individual.getChromosome();
 		int chromosomePos = 0;
 		int classIndex = 0;
+		int groupIndex = 0;
 
 		for (Group group : this.getGroupsAsArray()) {
+			Class[][] classes = new Class[DayOfWeek.values().length - 1][dayTimeslot.size()];
 			for (Module module : group.getModules()) {
 				for (int number = 1; number <= module.getNumberOfClassesPerWeek(); number++) {
-					classes[classIndex] = new Class(classIndex, group, module);
+					Timeslot timeslot = getTimeslot(chromosome[chromosomePos]);
+
+					int timeslotNum = dayTimeslot.indexOf(timeslot.getTimeslot());
+					int dayNum = timeslot.getDayOfWeek().ordinal();
+
+					classes[dayNum][timeslotNum] = new Class(classIndex, group, module);
 
 					// Add timeslot
-					classes[classIndex].addTimeslot(getTimeslot(chromosome[chromosomePos]));
+					classes[dayNum][timeslotNum].addTimeslot(getTimeslot(chromosome[chromosomePos]));
 					chromosomePos++;
 
 					// Add room
-					classes[classIndex].setRoom(getRoom(chromosome[chromosomePos]));
+					classes[dayNum][timeslotNum].setRoom(getRoom(chromosome[chromosomePos]));
 					chromosomePos++;
 
 					// Add professor
-					classes[classIndex].addProfessor(getProfessor(chromosome[chromosomePos]));
+					classes[dayNum][timeslotNum].addProfessor(getProfessor(chromosome[chromosomePos]));
 					chromosomePos++;
 
 					classIndex++;
 				}
 			}
+			allClasses[groupIndex++] = classes;
 		}
 
-		this.classes = classes;
+		this.classes = allClasses;
 	}
 
 	/**
@@ -335,7 +359,7 @@ public class Timetable {
 	 * 
 	 * @return classes
 	 */
-	public Class[] getClasses() {
+	public Class[][][] getClasses() {
 		return this.classes;
 	}
 
@@ -346,12 +370,18 @@ public class Timetable {
 	 */
 	public NavigableMap<Integer,List<Class>> getClassesByGroups() {
 		NavigableMap<Integer,List<Class>> classesByGroups = new TreeMap<>();
-		for (Class clas: classes) {
-			List<Class> classesByGroup = classesByGroups.get(clas.getGroup().getGroupId());
-			if (classesByGroup == null) {
-				classesByGroups.put(clas.getGroup().getGroupId(), classesByGroup = new ArrayList<>());
+		for (Class[][] group: classes) {
+			for (Class[] row: group) {
+				for (Class clas: row) {
+					if (clas != null) {
+						List<Class> classesByGroup = classesByGroups.get(clas.getGroup().getGroupId());
+						if (classesByGroup == null) {
+							classesByGroups.put(clas.getGroup().getGroupId(), classesByGroup = new ArrayList<>());
+						}
+						classesByGroup.add(clas);
+					}
+				}
 			}
-			classesByGroup.add(clas);
 		}
 		return classesByGroups;
 	}
@@ -403,34 +433,68 @@ public class Timetable {
 	public int calcClashes() {
 		int clashes = 0;
 
-		for (Class classA : this.classes) {
-			// Check room capacity
-			int roomCapacity = classA.getRoom().getRoomCapacity();
-			int groupSize = classA.getGroup().getGroupSize();
-			
-			if (roomCapacity < groupSize) {
-				clashes++;
-			}
+		for (int g = 0; g < classes.length; g++) {
+			for (int i = 0; i < classes[g].length; i++) {
+				for (int j = 0; j < classes[g][i].length; j++) {
+					Class classA = classes[g][i][j];
 
-			// Check if room is taken
-			for (Class classB : this.classes) {
-				if (classA.getRoom().getRoomId() == classB.getRoom().getRoomId() && classA.getTimeslot().getTimeslotId() == classB.getTimeslot().getTimeslotId()
-						&& classA.getClassId() != classB.getClassId()) {
-					clashes++;
-					break;
-				}
-			}
+					if (classA != null) {
 
-			// Check if professor is available
-			for (Class classB : this.classes) {
-				if (classA.getProfessor().getProfessorId() == classB.getProfessor().getProfessorId() && classA.getTimeslot().getTimeslotId() == classB.getTimeslot().getTimeslotId()
-						&& classA.getClassId() != classB.getClassId()) {
-					clashes++;
-					break;
+						// Check room capacity
+						int roomCapacity = classA.getRoom().getRoomCapacity();
+						int groupSize = classA.getGroup().getGroupSize();
+
+						if (roomCapacity < groupSize) {
+							clashes++;
+						}
+
+						// Check if room is taken
+						for (int k = 0; k < classes.length; k++) {
+							Class classB = classes[k][i][j];
+							if (classB != null &&
+								classA.getRoom().getRoomId() == classB.getRoom().getRoomId() &&
+								classA.getTimeslot().getTimeslotId() == classB.getTimeslot().getTimeslotId() &&
+								classA.getClassId() != classB.getClassId()) {
+								clashes++;
+								break;
+							}
+						}
+
+						// Check if professor is available
+						for (int k = 0; k < classes.length; k++) {
+							Class classB = classes[k][i][j];
+							if (classB != null &&
+								classA.getProfessor().getProfessorId() == classB.getProfessor().getProfessorId() &&
+								classA.getTimeslot().getTimeslotId() == classB.getTimeslot().getTimeslotId() &&
+								classA.getClassId() != classB.getClassId()) {
+								clashes++;
+								break;
+							}
+						}
+					}
 				}
 			}
 		}
 
 		return clashes;
+	}
+
+	public double calcWindows() {
+		double windows = 0;
+		for (Class[][] group: classes) {
+			for (Class[] clas: group) {
+				for (int i = 0; i < clas.length - 2; i++) {
+					if (clas[i] != null && clas[i+1] == null) {
+						for (int j = i+2; j < clas.length; j++) {
+							if (clas[j] != null) {
+								windows += 0.1;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		return windows;
 	}
 }

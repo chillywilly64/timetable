@@ -57,7 +57,7 @@ public class DataParser {
 
         Set<String> rooms = new HashSet<>();
         Map<String, Professor> professorsMap = new HashMap<>();
-        Set<String> timeslots = new HashSet<>();
+        Set<String> timeslots = new LinkedHashSet<>();
         List<Module> modules = new ArrayList<>();
 
         for (String group: groupsList.split(",")) {
@@ -95,6 +95,7 @@ public class DataParser {
                 }
             }
         }
+        timetable.setDaysTimeslot(new ArrayList<>(timeslots));
 
         modelAndView.setViewName("timetable");
         modelAndView.addObject(timetableService.timetableToDTO(TimetableGA.run(timetable)));

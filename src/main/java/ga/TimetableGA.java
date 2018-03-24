@@ -74,27 +74,28 @@ public class TimetableGA {
         System.out.println("Solution found in " + generation + " generations");
         System.out.println("Final solution fitness: " + population.getFittest(0).getFitness());
         System.out.println("Clashes: " + timetable.calcClashes());
+		System.out.println("Windows: " + timetable.calcWindows());
 
         // Print classes
-        System.out.println();
-        Class classes[] = timetable.getClasses();
-        int classIndex = 1;
-        for (Class bestClass : classes) {
-            System.out.println("Class " + classIndex + ":");
-            System.out.println("Module: " + 
-                    bestClass.getModule().getModuleName());
-            System.out.println("Group: " + 
-                    bestClass.getGroup().getGroupId());
-            System.out.println("Room: " + 
-                    bestClass.getRoom().getRoomNumber());
-            System.out.println("Professor: " + 
-                    bestClass.getProfessor().getProfessorName());
-            System.out.println("Time: " +
-					bestClass.getTimeslot().getDayOfWeek() + " " +
-                    bestClass.getTimeslot().getTimeslot());
-            System.out.println("-----");
-            classIndex++;
-        }
+//        System.out.println();
+//        Class classes[] = timetable.getClasses();
+//        int classIndex = 1;
+//        for (Class bestClass : classes) {
+//            System.out.println("Class " + classIndex + ":");
+//            System.out.println("Module: " +
+//                    bestClass.getModule().getModuleName());
+//            System.out.println("Group: " +
+//                    bestClass.getGroup().getGroupId());
+//            System.out.println("Room: " +
+//                    bestClass.getRoom().getRoomNumber());
+//            System.out.println("Professor: " +
+//                    bestClass.getProfessor().getProfessorName());
+//            System.out.println("Time: " +
+//					bestClass.getTimeslot().getDayOfWeek() + " " +
+//                    bestClass.getTimeslot().getTimeslot());
+//            System.out.println("-----");
+//            classIndex++;
+//        }
         return timetable;
     }
 

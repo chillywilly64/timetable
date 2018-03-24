@@ -57,7 +57,7 @@ public class GeneticAlgorithm {
 	 * @return boolean True if termination condition met, otherwise, false
 	 */
 	public boolean isTerminationConditionMet(int generationsCount, int maxGenerations) {
-		return (generationsCount > maxGenerations);
+		return (generationsCount == maxGenerations);
 	}
 
 	/**
@@ -90,7 +90,8 @@ public class GeneticAlgorithm {
 
 		// Calculate fitness
 		int clashes = threadTimetable.calcClashes();
-		double fitness = 1 / (double) (clashes + 1);
+		double windows = threadTimetable.calcWindows();
+		double fitness = 1 / (clashes + windows * 0.1 + 1);
 
 		individual.setFitness(fitness);
 

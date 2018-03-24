@@ -1,7 +1,6 @@
 package ga;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Random;
 
 public class Population {
@@ -77,17 +76,14 @@ public class Population {
 	 */
 	public Individual getFittest(int offset) {
 		// Order population by fitness
-		Arrays.sort(this.population, new Comparator<Individual>() {
-			@Override
-			public int compare(Individual o1, Individual o2) {
-				if (o1.getFitness() > o2.getFitness()) {
-					return -1;
-				} else if (o1.getFitness() < o2.getFitness()) {
-					return 1;
-				}
-				return 0;
-			}
-		});
+		Arrays.sort(this.population, (o1, o2) -> {
+            if (o1.getFitness() > o2.getFitness()) {
+                return -1;
+            } else if (o1.getFitness() < o2.getFitness()) {
+                return 1;
+            }
+            return 0;
+        });
 
 		// Return the fittest individual
 		return this.population[offset];
