@@ -1,4 +1,4 @@
-package ga;
+package ga.entity;
 
 import java.util.List;
 import java.util.Objects;

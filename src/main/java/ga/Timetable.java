@@ -1,5 +1,8 @@
 package ga;
 
+import ga.entity.*;
+import ga.entity.Class;
+
 import java.time.DayOfWeek;
 import java.util.*;
 

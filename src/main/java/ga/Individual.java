@@ -1,5 +1,8 @@
 package ga;
 
+import ga.entity.Group;
+import ga.entity.Module;
+
 import java.util.Arrays;
 
 public class Individual {

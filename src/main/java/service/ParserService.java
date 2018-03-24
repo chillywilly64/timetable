@@ -1,64 +1,38 @@
-package parser;
+package service;
 
 import ga.*;
+import ga.entity.Module;
+import ga.entity.Professor;
+import ga.entity.Room;
+import ga.entity.Timeslot;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.ModelAndView;
-import service.TimetableService;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-@RestController
-public class DataParser {
-    private static final Logger log = LoggerFactory.getLogger(DataParser.class);
-
-    private static final String PRACTIC = "пр.";
-    private static final String LECTURE = "лек.";
-    private static final Pattern ROOM_PATTERN_1 = Pattern.compile("ауд. [0-9]{1,3}");
-    private static final Pattern ROOM_PATTERN_2 = Pattern.compile("[0-9]{1,3} ауд.");
-    private static final Pattern DEP_PATTERN = Pattern.compile("[0-9]{1,2} корп.");
-
-    @Value("${requestUrl}")
-    private String requestUrl;
-
-    @Value("${groupsList}")
-    private String groupsList;
+@Service
+public class ParserService {
 
     private int roomId = 0;
     private int moduleId = 0;
     private int professorId = 0;
     private int timeslotId = 0;
 
-    @Autowired
-    private TimetableService timetableService;
-
-    @RequestMapping("/timetable")
-    public ModelAndView getTimetable(ModelAndView modelAndView) {
-        modelAndView.setViewName("timetable");
-        modelAndView.addObject(timetableService.timetableToDTO(TimetableGA.run(null)));
-        return modelAndView;
-    }
-
-    @RequestMapping("/parser")
-    public ModelAndView getItemInfo(ModelAndView modelAndView) throws IOException {
+    public Timetable getItemInfo(String requestUrl, String groupsList) throws IOException {
         Timetable timetable = new Timetable();
 
         Set<String> rooms = new HashSet<>();
         Map<String, Professor> professorsMap = new HashMap<>();
         Set<String> timeslots = new LinkedHashSet<>();
         List<Module> modules = new ArrayList<>();
+
+        resetIncrements();
 
         for (String group: groupsList.split(",")) {
             Document doc = Jsoup.connect(requestUrl + group).get();
@@ -97,9 +71,7 @@ public class DataParser {
         }
         timetable.setDaysTimeslot(new ArrayList<>(timeslots));
 
-        modelAndView.setViewName("timetable");
-        modelAndView.addObject(timetableService.timetableToDTO(TimetableGA.run(timetable)));
-        return modelAndView;
+        return timetable;
 
     }
 
@@ -143,25 +115,11 @@ public class DataParser {
         return professor;
     }
 
-    private boolean isPractit(Element element) {
-        String type = element.selectFirst("div.l-pr-t").text();
-
-        boolean isLab = false;
-        if (type.equals(PRACTIC)) {
-            isLab = true;
-        } else if (type.equals(LECTURE)) {
-            isLab = false;
-        }
-        return isLab;
+    private void resetIncrements(){
+        roomId = 0;
+        moduleId = 0;
+        professorId = 0;
+        timeslotId = 0;
     }
 
-    private String extractSubstringByRegex(String s, Pattern ... patterns) {
-        for (Pattern pattern: patterns) {
-            Matcher matcher = pattern.matcher(s);
-            if (matcher.find()) {
-                return matcher.group();
-            }
-        }
-        throw new IllegalArgumentException("No string found");
-    }
 }

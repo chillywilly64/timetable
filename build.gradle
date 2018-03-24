@@ -14,7 +14,9 @@ repositories {
 
 dependencies {
     runtime('org.springframework.boot:spring-boot-devtools')
-    compile("org.springframework.boot:spring-boot-starter-web")
+    compile('org.springframework.boot:spring-boot-starter-web'){
+        exclude group: 'org.springframework.boot:spring-boot-starter-logging'
+    }
     providedRuntime('javax.servlet:jstl')
     providedRuntime('org.apache.tomcat.embed:tomcat-embed-jasper')
     compile('com.fasterxml.jackson.core:jackson-databind')

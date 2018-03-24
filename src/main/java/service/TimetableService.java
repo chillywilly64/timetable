@@ -2,8 +2,8 @@ package service;
 
 import dto.CellDTO;
 import dto.TimetableDTO;
-import ga.Class;
-import ga.Timeslot;
+import ga.entity.Class;
+import ga.entity.Timeslot;
 import ga.Timetable;
 import org.springframework.stereotype.Service;
 

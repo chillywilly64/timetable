@@ -1,6 +1,12 @@
 package ga;
 
 
+import ga.entity.Module;
+import ga.entity.Professor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+
 import java.time.DayOfWeek;
 import java.util.Arrays;
 
@@ -32,13 +38,20 @@ import java.util.Arrays;
  *
  */
 public class TimetableGA {
+	private static final Logger log = LoggerFactory.getLogger(TimetableGA.class);
 
-    public static Timetable run(Timetable timetable) {
+    public static Timetable run(Timetable timetable,
+                                int populationSize,
+                                double mutationRate,
+                                double crossoverRate,
+                                int elitismCount,
+                                int tournamentSize) {
     	// Get a Timetable object with all the available information.
         if (timetable == null) timetable = initializeTimetable();
-        
+
         // Initialize GA
-        GeneticAlgorithm ga = new GeneticAlgorithm(100, 0.01, 0.9, 2, 5);
+        GeneticAlgorithm ga = new GeneticAlgorithm(
+        		populationSize, mutationRate, crossoverRate, elitismCount, tournamentSize);
         
         // Initialize population
         Population population = ga.initPopulation(timetable);
@@ -53,7 +66,7 @@ public class TimetableGA {
         while (ga.isTerminationConditionMet(generation, 1000) == false
             && ga.isTerminationConditionMet(population) == false) {
             // Print fitness
-            System.out.println("G" + generation + " Best fitness: " + population.getFittest(0).getFitness());
+            log.info("G" + generation + " Best fitness: " + population.getFittest(0).getFitness());
 
             // Apply crossover
             population = ga.crossoverPopulation(population);
@@ -70,32 +83,11 @@ public class TimetableGA {
 
         // Print fitness
         timetable.createClasses(population.getFittest(0));
-        System.out.println();
-        System.out.println("Solution found in " + generation + " generations");
-        System.out.println("Final solution fitness: " + population.getFittest(0).getFitness());
-        System.out.println("Clashes: " + timetable.calcClashes());
-		System.out.println("Windows: " + timetable.calcWindows());
+       	log.info("Solution found in " + generation + " generations");
+        log.info("Final solution fitness: " + population.getFittest(0).getFitness());
+        log.info("Clashes: " + timetable.calcClashes());
+		log.info("Windows: " + timetable.calcWindows());
 
-        // Print classes
-//        System.out.println();
-//        Class classes[] = timetable.getClasses();
-//        int classIndex = 1;
-//        for (Class bestClass : classes) {
-//            System.out.println("Class " + classIndex + ":");
-//            System.out.println("Module: " +
-//                    bestClass.getModule().getModuleName());
-//            System.out.println("Group: " +
-//                    bestClass.getGroup().getGroupId());
-//            System.out.println("Room: " +
-//                    bestClass.getRoom().getRoomNumber());
-//            System.out.println("Professor: " +
-//                    bestClass.getProfessor().getProfessorName());
-//            System.out.println("Time: " +
-//					bestClass.getTimeslot().getDayOfWeek() + " " +
-//                    bestClass.getTimeslot().getTimeslot());
-//            System.out.println("-----");
-//            classIndex++;
-//        }
         return timetable;
     }
 
