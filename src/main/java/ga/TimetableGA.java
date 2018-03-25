@@ -87,6 +87,7 @@ public class TimetableGA {
         log.info("Final solution fitness: " + population.getFittest(0).getFitness());
         log.info("Clashes: " + timetable.calcClashes());
 		log.info("Windows: " + timetable.calcWindows());
+		log.info("Late Clasees: " + timetable.calcLateClasses());
 
         return timetable;
     }

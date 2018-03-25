@@ -2,8 +2,16 @@ package ga;
 
 import ga.entity.Group;
 import ga.entity.Module;
+import ga.entity.Professor;
+import ga.entity.Room;
+import ga.entity.Timeslot;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Individual {
 	
@@ -40,29 +48,61 @@ public class Individual {
 		// Create random individual
 		int newChromosome[] = new int[chromosomeLength];
 		int chromosomeIndex = 0;
+
+		Map<Integer,List<Room>> roomsByTimeslots = new HashMap<>();
+		Map<Integer,List<Professor>> professorsByTimeslots = new HashMap<>();
+
+		for (Integer timeslot : timetable.getTimeslots().keySet()) {
+			roomsByTimeslots.put(timeslot, new ArrayList<>());
+			professorsByTimeslots.put(timeslot, new ArrayList<>());
+		}
+
 		// Loop through groups
 		for (Group group : timetable.getGroupsAsArray()) {
+			List<Module> modules = group.getModules();
+			Collections.shuffle(modules);
+
+			List<Timeslot> timeslots = new ArrayList<>(timetable.getTimeslots().values());
+
 			// Loop through modules
-			for (Module module: group.getModules()) {
+			for (Module module: modules) {
+				//Loop number of this modules per week times
 				for (int number = 1; number <= module.getNumberOfClassesPerWeek(); number++) {
+					Timeslot timeslot = getRandomIdFromList(timeslots);
+
 					// Add random time
-					int timeslotId = timetable.getRandomTimeslot().getTimeslotId();
+					int timeslotId = timeslot.getTimeslotId();
 					newChromosome[chromosomeIndex] = timeslotId;
 					chromosomeIndex++;
+					timeslots.remove(timeslot);
 
 					// Add random room
-					int roomId = timetable.getRandomRoom().getRoomId();
-					newChromosome[chromosomeIndex] = roomId;
+					List<Room> rooms = new ArrayList<>(timetable.getRooms().values());
+					List<Room> roomsByTimeslot = roomsByTimeslots.get(timeslotId);
+					rooms.removeAll(roomsByTimeslot);
+					Room room = getRandomIdFromList(rooms);
+					newChromosome[chromosomeIndex] = room.getRoomId();
 					chromosomeIndex++;
+					roomsByTimeslot.add(room);
 
 					// Add random professor
-					newChromosome[chromosomeIndex] = module.getRandomProfessor().getProfessorId();
+					List<Professor> professors = new ArrayList<>(timetable.getProfessors().values());
+					List<Professor> professorsByTimeslot = professorsByTimeslots.get(timeslotId);
+					professors.removeAll(professorsByTimeslot);
+					Professor professor = getRandomIdFromList(professors);
+					newChromosome[chromosomeIndex] = professor.getProfessorId();
 					chromosomeIndex++;
+					professorsByTimeslot.add(professor);
 				}
 			}
 		}
 
 		this.chromosome = newChromosome;
+	}
+
+	private  <T> T getRandomIdFromList(List<T> list) {
+		T element = (T) list.get((int) (list.size() * Math.random()));
+		return element;
 	}
 
 	/**

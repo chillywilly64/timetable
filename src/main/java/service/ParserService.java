@@ -45,11 +45,10 @@ public class ParserService {
             for (Element row : rows) {
                 addTimeslot(timeslots, row);
                 for (Element cell : row.select("td")) {
-                    for (Element element : cell.select("div.l")) {
-                        if (element != null) {
-                            addClassroom(rooms, element);
-                            addModuleAndProfessor(modulesMap, professorsMap, element);
-                        }
+                    Element element = cell.selectFirst("div.l");
+                    if (element != null) {
+                        addClassroom(rooms, element);
+                        addModuleAndProfessor(modulesMap, professorsMap, element);
                     }
                 }
             }

@@ -90,8 +90,9 @@ public class GeneticAlgorithm {
 
 		// Calculate fitness
 		int clashes = threadTimetable.calcClashes();
-		double windows = threadTimetable.calcWindows();
-		double fitness = 1 / (clashes + windows * 0.1 + 1);
+		int windows = threadTimetable.calcWindows();
+		int lateClasses = threadTimetable.calcLateClasses();
+		double fitness = 1 / (clashes * 0.1 + (windows + lateClasses) * 0.01);
 
 		individual.setFitness(fitness);
 

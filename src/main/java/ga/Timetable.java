@@ -71,7 +71,11 @@ public class Timetable {
 		this.dayTimeslot = cloneable.getDayTimeslot();
 	}
 
-	private Map<Integer, Group> getGroups() {
+	public Map<Integer, Room> getRooms() {
+		return this.rooms;
+	}
+
+	public Map<Integer, Group> getGroups() {
 		return this.groups;
 	}
 
@@ -79,15 +83,15 @@ public class Timetable {
 		return this.timeslots;
 	}
 
-	private Map<Integer, Module> getModules() {
+	public Map<Integer, Module> getModules() {
 		return this.modules;
 	}
 
-	private Map<Integer, Professor> getProfessors() {
+	public Map<Integer, Professor> getProfessors() {
 		return this.professors;
 	}
 
-	private List<String> getDayTimeslot() {
+	public List<String> getDayTimeslot() {
 		return this.dayTimeslot;
 	}
 
@@ -268,11 +272,7 @@ public class Timetable {
 		if (!this.rooms.containsKey(roomId)) {
 			System.out.println("Rooms doesn't contain key " + roomId);
 		}
-		return (Room) this.rooms.get(roomId);
-	}
-
-	public Map<Integer, Room> getRooms() {
-		return this.rooms;
+		return this.rooms.get(roomId);
 	}
 
 	/**
@@ -482,15 +482,15 @@ public class Timetable {
 		return clashes;
 	}
 
-	public double calcWindows() {
-		double windows = 0;
+	public int calcWindows() {
+		int windows = 0;
 		for (Class[][] group: classes) {
 			for (Class[] clas: group) {
 				for (int i = 0; i < clas.length - 2; i++) {
 					if (clas[i] != null && clas[i+1] == null) {
 						for (int j = i+2; j < clas.length; j++) {
 							if (clas[j] != null) {
-								windows += 0.1;
+								windows ++;
 								break;
 							}
 						}
@@ -500,4 +500,19 @@ public class Timetable {
 		}
 		return windows;
 	}
+
+    public int calcLateClasses() {
+        int lateClasses = 0;
+        int lateTimeslotBorder = dayTimeslot.size() / 2;
+        for (Class[][] group: classes) {
+            for (Class[] clas: group) {
+                for (int i = lateTimeslotBorder; i < clas.length; i++) {
+                    if (clas[i] != null) {
+                        lateClasses++;
+                    }
+                }
+            }
+        }
+        return lateClasses;
+    }
 }
