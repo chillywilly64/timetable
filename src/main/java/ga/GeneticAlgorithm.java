@@ -90,9 +90,13 @@ public class GeneticAlgorithm {
 
 		// Calculate fitness
 		int clashes = threadTimetable.calcClashes();
-		int windows = threadTimetable.calcWindows();
-		int lateClasses = threadTimetable.calcLateClasses();
-		double fitness = 1 / (clashes * 0.1 + (windows + lateClasses) * 0.01);
+		//int windows = threadTimetable.calcWindows();
+		//int lateClasses = threadTimetable.calcLateClasses();
+		//double fitness = 1 / (clashes * 0.1 + (windows + lateClasses) * 0.01);
+
+		int earlyClasses = threadTimetable.calcEarlyClasses();
+		int adjacent = threadTimetable.calcAdjacentClasses();
+		double fitness = 1 / (-clashes + (adjacent + earlyClasses)*0.01);
 
 		individual.setFitness(fitness);
 
@@ -211,12 +215,26 @@ public class GeneticAlgorithm {
 		// Create new population
 		Population newPopulation = new Population(population.size());
 
+		//get best fitness
+		double bestFitness = population.getFittest(0).getFitness();
+
 		// Loop over current population by fitness
 		for (int populationIndex = 0; populationIndex < population.size(); populationIndex++) {
 			Individual parent1 = population.getFittest(populationIndex);
 
+			// Calculate adaptive mutation rate
+			double adaptiveCrossoverRate = this.crossoverRate;
+			if (parent1.getFitness() > population.getAvgFitness()) {
+				double fitnessDelta1 = bestFitness - parent1.
+						getFitness();
+				double fitnessDelta2 = bestFitness - population.
+						getAvgFitness();
+				adaptiveCrossoverRate = (fitnessDelta1 / fitnessDelta2) *
+						this.crossoverRate;
+			}
+
 			// Apply crossover to this individual?
-			if (this.crossoverRate > Math.random() && populationIndex >= this.elitismCount) {
+			if (adaptiveCrossoverRate > Math.random() && populationIndex >= this.elitismCount) {
 				// Initialize offspring
 				Individual offspring = new Individual(parent1.getChromosome());
 				

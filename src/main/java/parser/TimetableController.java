@@ -41,14 +41,6 @@ public class TimetableController {
     @Autowired
     private ParserService parserService;
 
-    @RequestMapping("/timetable")
-    public ModelAndView getTimetable(ModelAndView modelAndView) {
-        modelAndView.setViewName("timetable");
-        modelAndView.addObject(timetableService.timetableToDTO(TimetableGA.run(null,
-                populationSize, mutationRate, crossoverRate, elitismCount, tournamentSize)));
-        return modelAndView;
-    }
-
     @RequestMapping("/parser")
     public ModelAndView getItemInfo(ModelAndView modelAndView) throws IOException {
 

@@ -430,8 +430,8 @@ public class Timetable {
 	 * The two inner `for` loops can be combined here as an optimization, but
 	 * kept separate for clarity. For small values of this.classes.length it
 	 * doesn't make a difference, but for larger values it certainly does.
-	 * 
-	 * @return numClashes
+	 *
+	 * @return clashes
 	 */
 	public int calcClashes() {
 		int clashes = 0;
@@ -482,6 +482,12 @@ public class Timetable {
 		return clashes;
 	}
 
+	/**
+	 * Calculate the number of windows
+	 * If timetable have free slot between two classes incremate this counter
+	 *
+	 * @return windows
+	 */
 	public int calcWindows() {
 		int windows = 0;
 		for (Class[][] group: classes) {
@@ -501,18 +507,65 @@ public class Timetable {
 		return windows;
 	}
 
-    public int calcLateClasses() {
-        int lateClasses = 0;
-        int lateTimeslotBorder = dayTimeslot.size() / 2;
-        for (Class[][] group: classes) {
-            for (Class[] clas: group) {
-                for (int i = lateTimeslotBorder; i < clas.length; i++) {
-                    if (clas[i] != null) {
-                        lateClasses++;
-                    }
-                }
-            }
-        }
-        return lateClasses;
-    }
+	/**
+	 * Calculate the number of adjacent classes
+	 * If timetable have two classes in a row in day incremate this counter
+	 *
+	 * @return windows
+	 */
+	public int calcAdjacentClasses() {
+		int adjacent = 0;
+		for (Class[][] group: classes) {
+			for (Class[] clas: group) {
+				for (int i = 0; i < clas.length - 1; i++) {
+					if (clas[i] != null && clas[i+1] != null) {
+						adjacent++;
+					}
+				}
+			}
+		}
+		return adjacent;
+	}
+
+	/**
+	 * Calculate the number of late classes
+	 * If timetable have late class, in second half of day, incremate this counter
+	 *
+	 * @return windows
+	 */
+	public int calcLateClasses() {
+			int lateClasses = 0;
+			int lateTimeslotBorder = dayTimeslot.size() / 2;
+			for (Class[][] group: classes) {
+					for (Class[] clas: group) {
+							for (int i = lateTimeslotBorder; i < clas.length; i++) {
+									if (clas[i] != null) {
+											lateClasses++;
+									}
+							}
+					}
+			}
+			return lateClasses;
+	}
+
+	/**
+	 * Calculate the number of early classes
+	 * If timetable have early class, in first half of day, incremate this counter
+	 *
+	 * @return windows
+	 */
+	public int calcEarlyClasses() {
+		int lateClasses = 0;
+		int lateTimeslotBorder = dayTimeslot.size() / 2;
+		for (Class[][] group: classes) {
+			for (Class[] clas: group) {
+				for (int i = lateTimeslotBorder; i < clas.length; i++) {
+					if (clas[i] != null) {
+						lateClasses++;
+					}
+				}
+			}
+		}
+		return lateClasses;
+	}
 }
