@@ -2,41 +2,33 @@ package ga;
 
 import ga.entity.Group;
 import ga.entity.Module;
-import ga.entity.Professor;
-import ga.entity.Room;
-import ga.entity.Timeslot;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class Individual {
-	
+
 	/**
-	 * In this case, the chromosome is an array of integers rather than a string. 
+	 * In this case, the chromosome is an array of integers rather than a string.
 	 */
 	private int[] chromosome;
 	private double fitness = -1;
 
 	/**
 	 * Initializes random individual based on a timetable
-	 * 
+	 *
 	 * The Timetable class is a bit overloaded. It knows both fixed information
 	 * (the courses that MUST be scheduled, the professors that MUST be given
 	 * jobs, the classrooms that DO exist) -- but it also understands how to
 	 * parse and unpack chromosomes which contain variable information (which
 	 * professor teaches which class and when?)
-	 * 
+	 *
 	 * In this case, we use the Timetable for the fixed information only, and
 	 * generate a random chromosome, making guesses at the variable information.
-	 * 
+	 *
 	 * Given the fixed information in a Timetable, we create a chromosome that
 	 * randomly assigns timeslots, rooms, and professors to the chromosome for
 	 * each student group and module.
-	 * 
+	 *
 	 * @param timetable
 	 *            The timetable information
 	 */
@@ -48,61 +40,29 @@ public class Individual {
 		// Create random individual
 		int newChromosome[] = new int[chromosomeLength];
 		int chromosomeIndex = 0;
-
-		Map<Integer,List<Room>> roomsByTimeslots = new HashMap<>();
-		Map<Integer,List<Professor>> professorsByTimeslots = new HashMap<>();
-
-		for (Integer timeslot : timetable.getTimeslots().keySet()) {
-			roomsByTimeslots.put(timeslot, new ArrayList<>());
-			professorsByTimeslots.put(timeslot, new ArrayList<>());
-		}
-
 		// Loop through groups
 		for (Group group : timetable.getGroupsAsArray()) {
-			List<Module> modules = group.getModules();
-			Collections.shuffle(modules);
-
-			List<Timeslot> timeslots = new ArrayList<>(timetable.getTimeslots().values());
-
 			// Loop through modules
-			for (Module module: modules) {
-				//Loop number of this modules per week times
+			for (Module module: group.getModules()) {
 				for (int number = 1; number <= module.getNumberOfClassesPerWeek(); number++) {
-					Timeslot timeslot = getRandomIdFromList(timeslots);
-
 					// Add random time
-					int timeslotId = timeslot.getTimeslotId();
+					int timeslotId = timetable.getRandomTimeslot().getTimeslotId();
 					newChromosome[chromosomeIndex] = timeslotId;
 					chromosomeIndex++;
-					timeslots.remove(timeslot);
 
 					// Add random room
-					List<Room> rooms = new ArrayList<>(timetable.getRooms().values());
-					List<Room> roomsByTimeslot = roomsByTimeslots.get(timeslotId);
-					rooms.removeAll(roomsByTimeslot);
-					Room room = getRandomIdFromList(rooms);
-					newChromosome[chromosomeIndex] = room.getRoomId();
+					int roomId = timetable.getRandomRoom().getRoomId();
+					newChromosome[chromosomeIndex] = roomId;
 					chromosomeIndex++;
-					roomsByTimeslot.add(room);
 
 					// Add random professor
-					List<Professor> professors = new ArrayList<>(timetable.getProfessors().values());
-					List<Professor> professorsByTimeslot = professorsByTimeslots.get(timeslotId);
-					professors.removeAll(professorsByTimeslot);
-					Professor professor = getRandomIdFromList(professors);
-					newChromosome[chromosomeIndex] = professor.getProfessorId();
+					newChromosome[chromosomeIndex] = module.getRandomProfessor().getProfessorId();
 					chromosomeIndex++;
-					professorsByTimeslot.add(professor);
 				}
 			}
 		}
 
 		this.chromosome = newChromosome;
-	}
-
-	private  <T> T getRandomIdFromList(List<T> list) {
-		T element = (T) list.get((int) (list.size() * Math.random()));
-		return element;
 	}
 
 	/**
