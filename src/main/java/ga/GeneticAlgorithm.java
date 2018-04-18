@@ -3,7 +3,6 @@ package ga;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 public class GeneticAlgorithm {
 
@@ -67,7 +66,7 @@ public class GeneticAlgorithm {
 	 * @return boolean True if termination condition met, otherwise, false
 	 */
 	public boolean isTerminationConditionMet(Population population) {
-		return population.getFittest(0).getFitness() == 1.0;
+		return population.getFittest(0).getFitness() >= 10.0;
 	}
 
 	/**
@@ -95,8 +94,9 @@ public class GeneticAlgorithm {
 		//double fitness = 1 / (clashes * 0.1 + (windows + lateClasses) * 0.01);
 
 		int earlyClasses = threadTimetable.calcEarlyClasses();
-		int adjacent = threadTimetable.calcAdjacentClasses();
-		double fitness = 1 / (-clashes + (adjacent + earlyClasses)*0.01);
+		int adjacentClasses = threadTimetable.calcAdjacentClasses();
+		int classesUnderLimit = threadTimetable.calcClassesUnderLimit();
+		double fitness = (- clashes + adjacentClasses * 0.1 + earlyClasses * 0.05 + classesUnderLimit * 0.05);
 
 		individual.setFitness(fitness);
 
@@ -113,9 +113,9 @@ public class GeneticAlgorithm {
 	 * @param timetable
 	 */
 	public void evalPopulation(Population population, Timetable timetable) {
-		IntStream.range(0, population.size()).parallel()
-				.forEach(i -> this.calcFitness(population.getIndividual(i),
-						timetable));
+//		IntStream.range(0, population.size()).parallel()
+//				.forEach(i -> this.calcFitness(population.getIndividual(i),
+//						timetable));
 
 		double populationFitness = 0;
 
@@ -239,6 +239,7 @@ public class GeneticAlgorithm {
 				Individual offspring = new Individual(parent1.getChromosome());
 				
 				// Find second parent
+				//TODO: make normal selection
 				Individual parent2 = selectParent(population);
 
 				// Loop over genome

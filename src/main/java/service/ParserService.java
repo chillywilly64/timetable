@@ -9,7 +9,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -32,7 +31,7 @@ public class ParserService {
         Set<String> timeslots = new LinkedHashSet<>();
         List<Module> modules = new ArrayList<>();
 
-        resetIncrements();
+        resetIndexes();
 
         for (String group: groupsList.split(",")) {
             Document doc = Jsoup.connect(requestUrl + group).get();
@@ -114,7 +113,7 @@ public class ParserService {
         return professor;
     }
 
-    private void resetIncrements(){
+    private void resetIndexes(){
         roomId = 0;
         moduleId = 0;
         professorId = 0;

@@ -71,6 +71,7 @@ public class TimetableGA {
         log.info("Clashes: " + timetable.calcClashes());
 				log.info("Windows: " + timetable.calcWindows());
 				log.info("Late Clasees: " + timetable.calcLateClasses());
+				log.info("Classes excess: " + timetable.calcClassesOverLimit());
 
         return timetable;
     }

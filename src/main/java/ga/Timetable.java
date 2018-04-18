@@ -568,4 +568,52 @@ public class Timetable {
 		}
 		return lateClasses;
 	}
+
+	/**
+	 * Calculate the number of classes excess
+	 * If timetable have class per day more than need incremate this counter
+	 *
+	 * @return windows
+	 */
+	public int calcClassesOverLimit() {
+		int classesOverLimit = 0;
+		for (Class[][] group: classes) {
+			for (Class[] day: group) {
+				int classPerDay = 0;
+				for (Class clas: day) {
+					if (clas != null) {
+						classPerDay++;
+					}
+				}
+				if (classPerDay >= 4) {
+					classesOverLimit++;
+				}
+			}
+		}
+		return classesOverLimit;
+	}
+
+	/**
+	 * Calculate the number of classes excess
+	 * If timetable have class per day less than need incremate this counter
+	 *
+	 * @return windows
+	 */
+	public int calcClassesUnderLimit() {
+		int classesUnderLimit = 0;
+		for (Class[][] group: classes) {
+			for (Class[] day: group) {
+				int classPerDay = 0;
+				for (Class clas: day) {
+					if (clas != null) {
+						classPerDay++;
+					}
+				}
+				if (classPerDay < 4) {
+					classesUnderLimit++;
+				}
+			}
+		}
+		return classesUnderLimit;
+	}
 }

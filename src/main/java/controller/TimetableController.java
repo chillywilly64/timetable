@@ -1,4 +1,4 @@
-package parser;
+package controller;
 
 import ga.TimetableGA;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,10 +14,10 @@ import java.io.IOException;
 @RestController
 public class TimetableController {
 
-    @Value("${parser.requestUrl}")
+    @Value("${controller.requestUrl}")
     private String requestUrl;
 
-    @Value("${parser.groupsList}")
+    @Value("${controller.groupsList}")
     private String groupsList;
 
     @Value("${ga.populationSize}")
@@ -41,7 +41,7 @@ public class TimetableController {
     @Autowired
     private ParserService parserService;
 
-    @RequestMapping("/parser")
+    @RequestMapping("/timetable")
     public ModelAndView getItemInfo(ModelAndView modelAndView) throws IOException {
 
         modelAndView.setViewName("timetable");
