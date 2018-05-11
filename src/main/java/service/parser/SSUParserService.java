@@ -1,6 +1,6 @@
-package service;
+package service.parser;
 
-import ga.*;
+import ga.Timetable;
 import ga.entity.Module;
 import ga.entity.Professor;
 import ga.entity.Room;
@@ -9,21 +9,46 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * @author Sergey_Dovadzhyan
+ */
 @Service
-public class ParserService {
+public class SSUParserService implements ParserService{
+
+    private static final Logger log = LoggerFactory.getLogger(SSUParserService.class);
+
+    @Value("${controller.requestUrl}")
+    private String requestUrl;
+
+    @Value("${controller.groupsList}")
+    private String[] groupsList;
+
+    private static final int DEFAULT_ROOM_CAPACITY = 40;
+    private static final int DEFAULT_GROUP_SIZE = 30;
 
     private int roomId = 0;
     private int moduleId = 0;
     private int professorId = 0;
     private int timeslotId = 0;
 
-    public Timetable getItemInfo(String requestUrl, String groupsList) throws IOException {
+    @Override
+    public Timetable getTimetableData() throws IOException{
         Timetable timetable = new Timetable();
 
         Set<String> rooms = new HashSet<>();
@@ -33,7 +58,10 @@ public class ParserService {
 
         resetIndexes();
 
-        for (String group: groupsList.split(",")) {
+        log.info("Parsing start");
+
+        for (String group: groupsList) {
+            log.info("Parsing from " + requestUrl + group);
             Document doc = Jsoup.connect(requestUrl + group).get();
 
             Element schedule = doc.select("table[id=schedule]").first();
@@ -54,19 +82,23 @@ public class ParserService {
 
             List<Module> groupModules = new ArrayList<>(modulesMap.values());
             modules.addAll(groupModules);
-            timetable.addGroup(Integer.parseInt(group), 30, groupModules);
+            timetable.addGroup(Integer.parseInt(group), DEFAULT_GROUP_SIZE, groupModules);
         }
 
-        rooms.stream().map(roomName -> new Room(roomId++, roomName, 40)).forEach(room -> timetable.addRoom(room));
-        modules.stream().forEach(module -> timetable.addModule(module));
-        professorsMap.values().stream().forEach(professor -> timetable.addProfessor(professor));
-        for (String timeslot: timeslots) {
-            for (DayOfWeek dayOfWeek: DayOfWeek.values()) {
-                if (!dayOfWeek.equals(DayOfWeek.SUNDAY)) {
-                    timetable.addTimeslot(new Timeslot(timeslotId++, dayOfWeek, timeslot));
-                }
-            }
-        }
+        rooms.forEach(roomName -> timetable.addRoom(new Room(roomId++, roomName, DEFAULT_ROOM_CAPACITY)));
+        modules.forEach(module -> timetable.addModule(module));
+        professorsMap.values().forEach(professor -> timetable.addProfessor(professor));
+        Arrays.stream(DayOfWeek.values())
+            .filter(dayOfWeek -> !dayOfWeek.equals(DayOfWeek.SUNDAY))
+            .forEach(dayOfWeek -> timeslots
+                .forEach(timeslot -> timetable.addTimeslot(new Timeslot(timeslotId++, dayOfWeek, timeslot))));
+//        for (String timeslot: timeslots) {
+//            for (DayOfWeek dayOfWeek: DayOfWeek.values()) {
+//                if (!dayOfWeek.equals(DayOfWeek.SUNDAY)) {
+//                    timetable.addTimeslot(new Timeslot(timeslotId++, dayOfWeek, timeslot));
+//                }
+//            }
+//        }
         timetable.setDaysTimeslot(new ArrayList<>(timeslots));
 
         return timetable;
@@ -119,5 +151,4 @@ public class ParserService {
         professorId = 0;
         timeslotId = 0;
     }
-
 }

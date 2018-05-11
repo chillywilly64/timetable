@@ -2,6 +2,7 @@ package ga;
 
 import ga.entity.*;
 import ga.entity.Class;
+import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
 import java.util.*;
@@ -23,7 +24,7 @@ import java.util.*;
  * them than with the chromosome directly.
  * 
  * The calcClashes method is used by GeneticAlgorithm.calcFitness, and requires
- * that createClasses has been run first. calcClashes looks at the Class objects
+ * that createClasses has been runGA first. calcClashes looks at the Class objects
  * created by createClasses, and figures out how many hard constraints have been
  * violated.
  * 
@@ -38,6 +39,8 @@ public class Timetable {
 
 	private int numClasses = 0;
 	private List<String> dayTimeslot;
+
+	private int recommendedMaxClassesPerDay;
 
 	/**
 	 * Initialize new Timetable
@@ -54,11 +57,7 @@ public class Timetable {
 	 * "Clone" a timetable. We use this before evaluating a timetable so we have
 	 * a unique container for each set of classes created by "createClasses".
 	 * Truthfully, that's not entirely necessary (no big deal if we wipe out and
-	 * reuse the .classes property here), but Chapter 6 discusses
-	 * multi-threading for fitness calculations, and in order to do that we need
-	 * separate objects so that one thread doesn't step on another thread's
-	 * toes. So this constructor isn't _entirely_ necessary for Chapter 5, but
-	 * you'll see it in action in Chapter 6.
+	 * reuse the .classes property here), but for multithreading it is good.
 	 * 
 	 * @param cloneable
 	 */
@@ -104,7 +103,7 @@ public class Timetable {
 	 * @param capacity
 	 */
 	public void addRoom(int roomId, String roomName, int capacity) {
-		this.rooms.put(roomId, new Room(roomId, roomName, capacity));
+		rooms.put(roomId, new Room(roomId, roomName, capacity));
 	}
 
 	/**
@@ -113,7 +112,7 @@ public class Timetable {
 	 * @param room
 	 */
 	public void addRoom(Room room) {
-		this.rooms.put(room.getRoomId(), room);
+		rooms.put(room.getRoomId(), room);
 	}
 
 	/**
@@ -123,7 +122,7 @@ public class Timetable {
 	 * @param professorName
 	 */
 	public void addProfessor(int professorId, String professorName) {
-		this.professors.put(professorId, new Professor(professorId, professorName));
+		professors.put(professorId, new Professor(professorId, professorName));
 	}
 
 	/**
@@ -132,7 +131,7 @@ public class Timetable {
 	 * @param professor
 	 */
 	public void addProfessor(Professor professor) {
-		this.professors.put(professor.getProfessorId(), professor);
+		professors.put(professor.getProfessorId(), professor);
 	}
 
 	/**
@@ -144,7 +143,7 @@ public class Timetable {
 	 * @param professors
 	 */
 	public void addModule(int moduleId, String moduleCode, String module, int numberOfClassesPerWeek, List<Professor> professors) {
-		this.modules.put(moduleId, new Module(moduleId, module, numberOfClassesPerWeek, professors));
+		modules.put(moduleId, new Module(moduleId, module, numberOfClassesPerWeek, professors));
 	}
 
 	/**
@@ -153,7 +152,7 @@ public class Timetable {
 	 * @param module
 	 */
 	public void addModule(Module module) {
-		this.modules.put(module.getModuleId(), module);
+		modules.put(module.getModuleId(), module);
 	}
 
 	/**
@@ -164,8 +163,8 @@ public class Timetable {
 	 * @param modules
 	 */
 	public void addGroup(int groupId, int groupSize, List<Module> modules) {
-		this.groups.put(groupId, new Group(groupId, groupSize, modules));
-		this.numClasses = 0;
+		groups.put(groupId, new Group(groupId, groupSize, modules));
+		numClasses = 0;
 	}
 
 	/**
@@ -174,8 +173,8 @@ public class Timetable {
 	 * @param group
 	 */
 	public void addGroup(Group group) {
-		this.groups.put(group.getGroupId(), group);
-		this.numClasses = 0;
+		groups.put(group.getGroupId(), group);
+		numClasses = 0;
 	}
 
 	/**
@@ -185,7 +184,7 @@ public class Timetable {
 	 * @param timeslot
 	 */
 	public void addTimeslot(int timeslotId, DayOfWeek dayOfWeek, String timeslot) {
-		this.timeslots.put(timeslotId, new Timeslot(timeslotId, dayOfWeek, timeslot));
+		timeslots.put(timeslotId, new Timeslot(timeslotId, dayOfWeek, timeslot));
 	}
 
 	/**
@@ -204,6 +203,15 @@ public class Timetable {
 	 */
 	public void setDaysTimeslot(List<String> dayTimeslot){
 		this.dayTimeslot = dayTimeslot;
+	}
+
+	/**
+	 * Set recommended max classes per day
+	 *
+	 * @param recommendedMaxClassesPerDay
+	 */
+	public void setRecommendedMaxClassesPerDay(int recommendedMaxClassesPerDay) {
+		this.recommendedMaxClassesPerDay = recommendedMaxClassesPerDay;
 	}
 
 	/**
@@ -230,7 +238,7 @@ public class Timetable {
 		int classIndex = 0;
 		int groupIndex = 0;
 
-		for (Group group : this.getGroupsAsArray()) {
+		for (Group group : getGroupsAsArray()) {
 			Class[][] classes = new Class[DayOfWeek.values().length - 1][dayTimeslot.size()];
 			for (Module module : group.getModules()) {
 				for (int number = 1; number <= module.getNumberOfClassesPerWeek(); number++) {
@@ -259,7 +267,7 @@ public class Timetable {
 			allClasses[groupIndex++] = classes;
 		}
 
-		this.classes = allClasses;
+		classes = allClasses;
 	}
 
 	/**
@@ -269,10 +277,7 @@ public class Timetable {
 	 * @return room
 	 */
 	public Room getRoom(int roomId) {
-		if (!this.rooms.containsKey(roomId)) {
-			System.out.println("Rooms doesn't contain key " + roomId);
-		}
-		return this.rooms.get(roomId);
+		return rooms.get(roomId);
 	}
 
 	/**
@@ -293,7 +298,7 @@ public class Timetable {
 	 * @return professor
 	 */
 	public Professor getProfessor(int professorId) {
-		return (Professor) this.professors.get(professorId);
+		return professors.get(professorId);
 	}
 
 	/**
@@ -303,7 +308,7 @@ public class Timetable {
 	 * @return module
 	 */
 	public Module getModule(int moduleId) {
-		return (Module) this.modules.get(moduleId);
+		return modules.get(moduleId);
 	}
 
 	/**
@@ -313,8 +318,7 @@ public class Timetable {
 	 * @return moduleId array
 	 */
 	public List<Module> getGroupModules(int groupId) {
-		Group group = this.groups.get(groupId);
-		return group.getModules();
+		return groups.get(groupId).getModules();
 	}
 
 	/**
@@ -324,7 +328,7 @@ public class Timetable {
 	 * @return group
 	 */
 	public Group getGroup(int groupId) {
-		return (Group) this.groups.get(groupId);
+		return groups.get(groupId);
 	}
 
 	/**
@@ -332,8 +336,8 @@ public class Timetable {
 	 * 
 	 * @return array of groups
 	 */
-	public Group[] getGroupsAsArray() {
-		return (Group[]) this.groups.values().toArray(new Group[this.groups.size()]);
+	public List<Group> getGroupsAsArray() {
+		return new ArrayList<>(groups.values());
 	}
 
 	/**
@@ -343,7 +347,7 @@ public class Timetable {
 	 * @return timeslot
 	 */
 	public Timeslot getTimeslot(int timeslotId) {
-		return this.timeslots.get(timeslotId);
+		return timeslots.get(timeslotId);
 	}
 
 	/**
@@ -352,7 +356,7 @@ public class Timetable {
 	 * @return timeslot
 	 */
 	public Timeslot getRandomTimeslot() {
-		Object[] timeslotArray = this.timeslots.values().toArray();
+		Object[] timeslotArray = timeslots.values().toArray();
 		Timeslot timeslot = (Timeslot) timeslotArray[(int) (timeslotArray.length * Math.random())];
 		return timeslot;
 	}
@@ -418,7 +422,7 @@ public class Timetable {
 	 * The most important method in this class; look at a candidate timetable
 	 * and figure out how many constraints are violated.
 	 * 
-	 * Running this method requires that createClasses has been run first (in
+	 * Running this method requires that createClasses has been runGA first (in
 	 * order to populate this.classes). The return value of this method is
 	 * simply the number of constraint violations (conflicting professors,
 	 * timeslots, or rooms), and that return value is used by the
@@ -426,10 +430,6 @@ public class Timetable {
 	 * 
 	 * There's nothing too difficult here either -- loop through this.classes,
 	 * and check constraints against the rest of the this.classes.
-	 * 
-	 * The two inner `for` loops can be combined here as an optimization, but
-	 * kept separate for clarity. For small values of this.classes.length it
-	 * doesn't make a difference, but for larger values it certainly does.
 	 *
 	 * @return clashes
 	 */
@@ -555,18 +555,18 @@ public class Timetable {
 	 * @return windows
 	 */
 	public int calcEarlyClasses() {
-		int lateClasses = 0;
+		int earlyClasses = 0;
 		int lateTimeslotBorder = dayTimeslot.size() / 2;
 		for (Class[][] group: classes) {
 			for (Class[] clas: group) {
-				for (int i = lateTimeslotBorder; i < clas.length; i++) {
+				for (int i = 0; i < lateTimeslotBorder; i++) {
 					if (clas[i] != null) {
-						lateClasses++;
+						earlyClasses++;
 					}
 				}
 			}
 		}
-		return lateClasses;
+		return earlyClasses;
 	}
 
 	/**
@@ -585,7 +585,7 @@ public class Timetable {
 						classPerDay++;
 					}
 				}
-				if (classPerDay >= 4) {
+				if (classPerDay > recommendedMaxClassesPerDay) {
 					classesOverLimit++;
 				}
 			}
@@ -609,7 +609,7 @@ public class Timetable {
 						classPerDay++;
 					}
 				}
-				if (classPerDay < 4) {
+				if (classPerDay <= recommendedMaxClassesPerDay) {
 					classesUnderLimit++;
 				}
 			}

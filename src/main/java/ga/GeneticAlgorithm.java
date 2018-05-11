@@ -10,7 +10,9 @@ public class GeneticAlgorithm {
 	private double mutationRate;
 	private double crossoverRate;
 	private int elitismCount;
-	protected int tournamentSize;
+	private int tournamentSize;
+	private double maxFitness;
+	private int maxGenerations;
 
 	// Create fitness hashtable
 	private Map<Individual, Double> fitnessHash = Collections.
@@ -24,13 +26,15 @@ public class GeneticAlgorithm {
 					});
 
 	public GeneticAlgorithm(int populationSize, double mutationRate, double crossoverRate, int elitismCount,
-			int tournamentSize) {
+			int tournamentSize, double maxFitness, int maxGenerations) {
 
 		this.populationSize = populationSize;
 		this.mutationRate = mutationRate;
 		this.crossoverRate = crossoverRate;
 		this.elitismCount = elitismCount;
 		this.tournamentSize = tournamentSize;
+		this.maxFitness = maxFitness;
+		this.maxGenerations = maxGenerations;
 	}
 
 	/**
@@ -48,25 +52,14 @@ public class GeneticAlgorithm {
 
 	/**
 	 * Check if population has met termination condition
-	 * 
-	 * @param generationsCount
-	 *            Number of generations passed
-	 * @param maxGenerations
-	 *            Number of generations to terminate after
-	 * @return boolean True if termination condition met, otherwise, false
-	 */
-	public boolean isTerminationConditionMet(int generationsCount, int maxGenerations) {
-		return (generationsCount == maxGenerations);
-	}
-
-	/**
-	 * Check if population has met termination condition
 	 *
 	 * @param population
-	 * @return boolean True if termination condition met, otherwise, false
+	 * @param generationsCount Number of generations passed
+	 *
+	 * @return boolean true if termination condition not met, otherwise, false
 	 */
-	public boolean isTerminationConditionMet(Population population) {
-		return population.getFittest(0).getFitness() >= 10.0;
+	public boolean isTerminationConditionNotMet(Population population, int generationsCount) {
+		return generationsCount != maxGenerations && population.getFittest(0).getFitness() < maxFitness;
 	}
 
 	/**
@@ -89,14 +82,10 @@ public class GeneticAlgorithm {
 
 		// Calculate fitness
 		int clashes = threadTimetable.calcClashes();
-		//int windows = threadTimetable.calcWindows();
-		//int lateClasses = threadTimetable.calcLateClasses();
-		//double fitness = 1 / (clashes * 0.1 + (windows + lateClasses) * 0.01);
-
 		int earlyClasses = threadTimetable.calcEarlyClasses();
 		int adjacentClasses = threadTimetable.calcAdjacentClasses();
 		int classesUnderLimit = threadTimetable.calcClassesUnderLimit();
-		double fitness = (- clashes + adjacentClasses * 0.1 + earlyClasses * 0.05 + classesUnderLimit * 0.05);
+		double fitness = (- clashes + adjacentClasses * 0.3 + earlyClasses * 0.1 + classesUnderLimit * 0.05);
 
 		individual.setFitness(fitness);
 

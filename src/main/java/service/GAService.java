@@ -1,14 +1,14 @@
-package ga;
+package service;
 
-
+import ga.GeneticAlgorithm;
+import ga.Population;
+import ga.Timetable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 /**
- * Don't be daunted by the number of classes in this chapter -- most of them are
- * just simple containers for information, and only have a handful of properties
- * with setters and getters.
- *
  * The real stuff happens in the GeneticAlgorithm class and the Timetable class.
  *
  * The Timetable class is what the genetic algorithm is expected to create a
@@ -22,32 +22,60 @@ import org.slf4j.LoggerFactory;
  * two classes simultaneously), and so is used by the GeneticAlgorithm's
  * calcFitness class as well.
  */
-public class TimetableGA {
-	private static final Logger log = LoggerFactory.getLogger(TimetableGA.class);
+@Service
+public class GAService {
 
-    public static Timetable run(Timetable timetable,
-                                int populationSize,
-                                double mutationRate,
-                                double crossoverRate,
-                                int elitismCount,
-                                int tournamentSize) {
+    @Value("${ga.populationSize}")
+    private int populationSize;
+
+    @Value("${ga.mutationRate}")
+    private double mutationRate;
+
+    @Value("${ga.crossoverRate}")
+    private double crossoverRate;
+
+    @Value("${ga.elitismCount}")
+    private int elitismCount;
+
+    @Value("${ga.tournamentSize}")
+    private int tournamentSize;
+
+    @Value("${ga.maxFitness}")
+    private double maxFitness;
+
+    @Value("${ga.maxGenerations}")
+    private int maxGenerations;
+
+    @Value("${timetable.recommendedMaxClassesPerDay:4}")
+    private int recommendedMaxClassesPerDay;
+
+	  private static final Logger log = LoggerFactory.getLogger(GAService.class);
+
+    public Timetable runGA(Timetable timetable) {
+
+        timetable.setRecommendedMaxClassesPerDay(recommendedMaxClassesPerDay);
 
         // Initialize GA
         GeneticAlgorithm ga = new GeneticAlgorithm(
-        		populationSize, mutationRate, crossoverRate, elitismCount, tournamentSize);
-        
+            populationSize,
+            mutationRate,
+            crossoverRate,
+            elitismCount,
+            tournamentSize,
+            maxFitness,
+            maxGenerations);
+
         // Initialize population
         Population population = ga.initPopulation(timetable);
-        
+
         // Evaluate population
         ga.evalPopulation(population, timetable);
-        
+
         // Keep track of current generation
         int generation = 1;
-        
+
         // Start evolution loop
-        while (ga.isTerminationConditionMet(generation, 1000) == false
-            && ga.isTerminationConditionMet(population) == false) {
+        while (ga.isTerminationConditionNotMet(population, generation)) {
             // Print fitness
             log.info("G" + generation + " Best fitness: " + population.getFittest(0).getFitness());
 
@@ -66,12 +94,12 @@ public class TimetableGA {
 
         // Print fitness
         timetable.createClasses(population.getFittest(0));
-       	log.info("Solution found in " + generation + " generations");
+        log.info("Solution found in " + generation + " generations");
         log.info("Final solution fitness: " + population.getFittest(0).getFitness());
         log.info("Clashes: " + timetable.calcClashes());
-				log.info("Windows: " + timetable.calcWindows());
-				log.info("Late Clasees: " + timetable.calcLateClasses());
-				log.info("Classes excess: " + timetable.calcClassesOverLimit());
+        log.info("Windows: " + timetable.calcWindows());
+        log.info("Late clases: " + timetable.calcLateClasses());
+        log.info("Classes over limit: " + timetable.calcClassesOverLimit());
 
         return timetable;
     }

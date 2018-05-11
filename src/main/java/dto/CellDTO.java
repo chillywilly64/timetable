@@ -1,5 +1,8 @@
 package dto;
 
+/**
+ * @author Sergey_Dovadzhyan
+ */
 public class CellDTO {
     private String subject;
     private String professor;

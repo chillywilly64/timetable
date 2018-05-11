@@ -13,6 +13,9 @@ import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * @author Sergey_Dovadzhyan
+ */
 @Service
 public class TimetableService {
 

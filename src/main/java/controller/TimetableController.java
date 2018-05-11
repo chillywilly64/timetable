@@ -1,39 +1,20 @@
 package controller;
 
-import ga.TimetableGA;
+import service.GAService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
-import service.ParserService;
+import service.parser.ParserService;
 import service.TimetableService;
 
 import java.io.IOException;
 
+/**
+ * @author Sergey_Dovadzhyan
+ */
 @RestController
 public class TimetableController {
-
-    @Value("${controller.requestUrl}")
-    private String requestUrl;
-
-    @Value("${controller.groupsList}")
-    private String groupsList;
-
-    @Value("${ga.populationSize}")
-    private int populationSize;
-
-    @Value("${ga.mutationRate}")
-    private double mutationRate;
-
-    @Value("${ga.crossoverRate}")
-    private double crossoverRate;
-
-    @Value("${ga.elitismCount}")
-    private int elitismCount;
-
-    @Value("${ga.tournamentSize}")
-    private int tournamentSize;
 
     @Autowired
     private TimetableService timetableService;
@@ -41,15 +22,17 @@ public class TimetableController {
     @Autowired
     private ParserService parserService;
 
+    @Autowired
+    private GAService gaService;
+
     @RequestMapping("/timetable")
-    public ModelAndView getItemInfo(ModelAndView modelAndView) throws IOException {
+    public ModelAndView getTimetable(ModelAndView modelAndView) throws IOException {
 
         modelAndView.setViewName("timetable");
         modelAndView.addObject(
                 timetableService.timetableToDTO(
-                        TimetableGA.run(
-                                parserService.getItemInfo(requestUrl, groupsList),
-                                populationSize, mutationRate, crossoverRate, elitismCount, tournamentSize)));
+                        gaService.runGA(
+                                parserService.getTimetableData())));
         return modelAndView;
 
     }

@@ -3,6 +3,9 @@ package dto;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author Sergey_Dovadzhyan
+ */
 public class TimetableDTO {
 
     private List<String> daysOfWeek;
