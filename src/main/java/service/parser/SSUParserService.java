@@ -33,11 +33,14 @@ public class SSUParserService implements ParserService{
 
     private static final Logger log = LoggerFactory.getLogger(SSUParserService.class);
 
-    @Value("${controller.requestUrl}")
+    @Value("${parser.requestUrl}")
     private String requestUrl;
 
-    @Value("${controller.groupsList}")
+    @Value("${parser.groupsList}")
     private String[] groupsList;
+
+    @Value("${parser.timeslotsPerDay}")
+    private int timeslotsPerDay;
 
     private static final int DEFAULT_ROOM_CAPACITY = 40;
     private static final int DEFAULT_GROUP_SIZE = 30;
@@ -53,7 +56,7 @@ public class SSUParserService implements ParserService{
 
         Set<String> rooms = new HashSet<>();
         Map<String, Professor> professorsMap = new HashMap<>();
-        Set<String> timeslots = new LinkedHashSet<>();
+        List<String> timeslots = new ArrayList<>();
         List<Module> modules = new ArrayList<>();
 
         resetIndexes();
@@ -88,24 +91,30 @@ public class SSUParserService implements ParserService{
         rooms.forEach(roomName -> timetable.addRoom(new Room(roomId++, roomName, DEFAULT_ROOM_CAPACITY)));
         modules.forEach(module -> timetable.addModule(module));
         professorsMap.values().forEach(professor -> timetable.addProfessor(professor));
-        Arrays.stream(DayOfWeek.values())
-            .filter(dayOfWeek -> !dayOfWeek.equals(DayOfWeek.SUNDAY))
-            .forEach(dayOfWeek -> timeslots
-                .forEach(timeslot -> timetable.addTimeslot(new Timeslot(timeslotId++, dayOfWeek, timeslot))));
-//        for (String timeslot: timeslots) {
-//            for (DayOfWeek dayOfWeek: DayOfWeek.values()) {
-//                if (!dayOfWeek.equals(DayOfWeek.SUNDAY)) {
-//                    timetable.addTimeslot(new Timeslot(timeslotId++, dayOfWeek, timeslot));
-//                }
-//            }
-//        }
-        timetable.setDaysTimeslot(new ArrayList<>(timeslots));
+
+        if (timeslotsPerDay < 6) {
+            log.warn("Timeslots per day is too few, parameter will be set to 6");
+            timeslotsPerDay = 6;
+        } else if (timeslotsPerDay > timeslots.size()) {
+            log.warn("Timeslots per day is too big, parameter will be set to " + timeslots.size());
+        } else if (timeslotsPerDay == 0) {
+            timeslotsPerDay = timeslots.size();
+        }
+
+        for (int i = 0; i < timeslotsPerDay; i++) {
+            for (DayOfWeek dayOfWeek: DayOfWeek.values()) {
+                if (!dayOfWeek.equals(DayOfWeek.SUNDAY)) {
+                    timetable.addTimeslot(new Timeslot(timeslotId++, dayOfWeek, timeslots.get(i)));
+                }
+            }
+        }
+        timetable.setDaysTimeslot(timeslots.subList(0, timeslotsPerDay));
 
         return timetable;
 
     }
 
-    private void addTimeslot(Set<String> timeslots, Element element) {
+    private void addTimeslot(List<String> timeslots, Element element) {
         String timeslot = element.selectFirst("th").text();
         if (timeslot != null && !timeslot.isEmpty()) {
             timeslots.add(timeslot);
