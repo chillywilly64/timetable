@@ -535,7 +535,7 @@ public class Timetable {
 	 */
 	public int calcLateClasses() {
 			int lateClasses = 0;
-			int lateTimeslotBorder = dayTimeslot.size() / 2;
+			int lateTimeslotBorder = recommendedMaxClassesPerDay;
 			for (Class[][] group: classes) {
 					for (Class[] clas: group) {
 							for (int i = lateTimeslotBorder; i < clas.length; i++) {
@@ -556,7 +556,7 @@ public class Timetable {
 	 */
 	public int calcEarlyClasses() {
 		int earlyClasses = 0;
-		int lateTimeslotBorder = dayTimeslot.size() / 2;
+		int lateTimeslotBorder = recommendedMaxClassesPerDay;
 		for (Class[][] group: classes) {
 			for (Class[] clas: group) {
 				for (int i = 0; i < lateTimeslotBorder; i++) {

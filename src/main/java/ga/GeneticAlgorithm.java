@@ -85,7 +85,7 @@ public class GeneticAlgorithm {
 		int earlyClasses = threadTimetable.calcEarlyClasses();
 		int adjacentClasses = threadTimetable.calcAdjacentClasses();
 		int classesUnderLimit = threadTimetable.calcClassesUnderLimit();
-		double fitness = (- clashes + adjacentClasses * 0.3 + earlyClasses * 0.2 + classesUnderLimit * 0.05);
+		double fitness = (- clashes + adjacentClasses * 0.5 + earlyClasses * 0.3 + classesUnderLimit * 0.05);
 
 		individual.setFitness(fitness);
 
